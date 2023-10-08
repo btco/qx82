@@ -39,7 +39,7 @@
       // Ask the user's name.
       qx.print("What is your name?\n> ");
       // Don't forget: qxa.* functions need to be called with await:
-      const name = await qxa.readline();
+      const name = await qxa.readLine();
       // Print it back, but in yellow (14).
       qx.color(14);
       qx.print("\n\nHi, " + name + ".");

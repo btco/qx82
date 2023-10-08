@@ -40,7 +40,7 @@ export class InputSys {
     });
   }
 
-  async readline(initString, maxLen) {
+  async readLine(initString, maxLen) {
     const startCol = main.drawState.cursorCol;
     const startRow = main.drawState.cursorRow;
     let curString = initString;

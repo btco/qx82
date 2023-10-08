@@ -30,11 +30,11 @@ export async function key() {
 /// maxLen: integer (default -1)
 ///   The maximum length of the string the user can type.
 ///   If this is -1, this means there is no limit.
-export async function readline(initString = "", maxLen = -1) {
-  main.preflight("readline");
+export async function readLine(initString = "", maxLen = -1) {
+  main.preflight("readLine");
   qut.checkString("initString", initString);
   qut.checkNumber("maxLen", maxLen);
-  return await main.inputSys.readline(initString, maxLen);
+  return await main.inputSys.readLine(initString, maxLen);
 }
 
 /// Shows a menu of choices and waits for the user to pick an option.
