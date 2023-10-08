@@ -22,6 +22,7 @@ const VJOY_CSS = `
     left: 64px;
     width: 30vmin;
     height: 30vmin;
+    user-select: none;
   }
 
   #vjoy-container-right {
@@ -30,6 +31,7 @@ const VJOY_CSS = `
     right: 64px;
     width: 30vmin;
     height: 30vmin;
+    user-select: none;
   }
 
   .vjoy-button {
