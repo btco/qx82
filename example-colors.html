@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Example - Hello</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+
+  <!-- Replace with a separate style.css file if you want -->
+  <style type="text/css">
+  body {
+    background: black;
+    color: white;
+    overscroll-behavior: none;
+  }
+  </style>
+
+  <!-- These 2 script tags are required for the 3D effect.
+       You can remove these if you disabled THREE_SETTINGS. -->
+  <script async src="https://unpkg.com/es-module-shims@1.8.0/dist/es-module-shims.js"></script>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.156.1/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.156.1/examples/jsm/"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import * as qx from "./qx82/qx.js";
+    import * as qxa from "./qx82/qxa.js";
+
+    const MAX_COLORS = 16;
+
+    let selFg = 7;
+    let selBg = 1;
+
+    async function main() {
+      while (true) {
+        render();
+        const k = await qxa.key();
+        if (k === "ArrowLeft") selFg = Math.max(0, selFg - 1);
+        if (k === "ArrowRight") selFg = Math.min(MAX_COLORS - 1, selFg + 1);
+        if (k === "ArrowUp") selBg = Math.max(0, selBg - 1);
+        if (k === "ArrowDown") selBg = Math.min(MAX_COLORS - 1, selBg + 1);
+      }
+    }
+
+    function render() {
+      qx.color(7, 0);
+      qx.cls();
+      qx.locate(1, 1);
+      qx.print("COLORS");
+      qx.locate(1, 21);
+      qx.print("Use arrow keys to change.");
+      for (let i = 0; i < 16; i++) {
+        const ch = "0123456789abcdef".substring(i, i + 1);
+        qx.color(7, 0);
+        qx.locate(i + 2, 3);
+        qx.print(ch);
+        qx.locate(1, i + 4);
+        qx.print(ch);
+      }
+      for (let i = 0; i < 16; i++) {
+        for (let j = 0; j < 16; j++) {
+          qx.locate(i + 2, 4 + j);
+          qx.color(i, j);
+          qx.print(i === selFg && j === selBg ? "*" : ".");
+        }
+      }
+      qx.locate(19, 3);
+      qx.color(selFg, selBg);
+      qx.printBox(11, 17);
+      qx.locate(20, 7);
+      qx.print(`FG: ${selFg}\nBG: ${selBg}\n\n` + 
+        `Lorem\nipsum\ndolor\nsit amet`);
+    }
+
+    window.addEventListener("load", () => qx.init(main));
+  </script>
+</head>
+<body>
+</body>
+</html>

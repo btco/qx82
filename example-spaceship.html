@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Example - Spaceship</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+
+  <!-- Replace with a separate style.css file if you want -->
+  <style type="text/css">
+  body {
+    background: black;
+    color: white;
+    overscroll-behavior: none;
+  }
+  </style>
+
+  <!-- These 2 script tags are required for the 3D effect.
+       You can remove these if you disabled THREE_SETTINGS. -->
+  <script async src="https://unpkg.com/es-module-shims@1.8.0/dist/es-module-shims.js"></script>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.156.1/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.156.1/examples/jsm/"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import * as qx from "./qx82/qx.js";
+    import * as qxa from "./qx82/qxa.js";
+    import * as qut from "./qx82/qut.js";
+
+    const CH_SPACESHIP = 0xf0;
+    const CH_ENEMY_LEFT = 0xf1;
+    const CH_ENEMY_RIGHT = 0xf3;
+    const CH_ENEMY_DOWN = 0xf5;
+    const CH_LASER = 0x84;
+    const MIN_Y = 24, MAX_Y = 168;
+    const MIN_X = 16, MAX_X = 248;
+
+    const ACCEL = 3;
+    const FRICTION = 2;
+    const MAX_SPEED = 4;
+
+    // Ship's collision rectangle
+    const PLAYER_COLL_RECT = { x: 1, y: 1, w: 6, h: 6 };
+    // Enemy's collision rectangle
+    const ENEMY_COLL_RECT = { x: 1, y: 1, w: 6, h: 6 };
+    // Laser's collision rectangle.
+    const LASER_COLL_RECT = { x: 2, y: 0, w: 4, h: 16 };
+
+    // Difficulty parameters are specified per score slice of 500, so the first value
+    // is used when the player has 0-499 points, the second value is for 500-999, etc.
+    const MIN_ENEMIES     = [   3,   3,   4,   4,   5,   5,   6,   6,   7,   7 ];
+    const MAX_ENEMIES     = [   5,   5,   6,   6,   7,   7,   8,   8,   9,   9 ];
+    const SPAWN_INTERVAL  = [ 100,  90,  80,  70,  60,  50,  40,  30,  30,  30 ];
+    const ENEMY_SPEED     = [   1,   2,   2,   3,   3,   4,   4,   5,   5,   6 ];
+    const ENEMY_COLOR     = [  12,  14,  13,  15,  11,  10,  12,  14,  13,  15 ];
+
+    // Player's coordinates (Y is fixed).
+    let playerX = 124, playerY = MAX_Y;
+    // Player's speed
+    let playerSpeed = 0;
+    // If a laser exists, laser.x, laser.y are its coordinates. Otherwise this is null.
+    let laser = null;
+    // Array of enemies.
+    const enemies = [];
+    // Countdown to spawn next enemy.
+    let spawnCountdown = 0;
+    // If partFx != null, then we're doing a particle effect at partFx.x, partFx.y
+    // partFx.ticks indicates for how many ticks we have been playing it.
+    let partFx = null;
+    let score = 0;
+    let gameOver = false;
+    let backgroundImg = null;
+    // Sound effects.
+    let sfxLaser = null;
+    let sfxHit = null;
+    let sfxBlast = null;
+
+    async function main() {
+      qx.cls();
+      qx.print("Loading...");
+      backgroundImg = await qxa.loadImage("assets/city.png");
+      sfxLaser = await qxa.loadSound("assets/laser.wav")
+      sfxHit = await qxa.loadSound("assets/hit.wav")
+      sfxBlast = await qxa.loadSound("assets/blast.wav")
+      qx.drawImage(0, 0, backgroundImg);
+      qx.locate(4, 6);
+      qx.color(14, -1);
+      qx.print("\u00d7  SPACESHIP EXAMPLE \u00d8 \u00d9");
+      qx.locate(5, 8);
+      qx.color(7, -1);
+      qx.print("Press any button to start.");
+      await qxa.key();
+      qx.cls();
+      qx.frame(doFrame);
+    }
+
+    async function doFrame() {
+      qx.cls();
+      qx.drawImage(0, 0, backgroundImg);
+      // Update and draw everything.
+      updateAndDrawPlayer();
+      if (laser) updateAndDrawLaser();
+      enemies.forEach(updateAndDrawEnemy);
+      updateAndDrawPartFx();
+
+      // Spawn enemy, if it's time. Or if we are below the minimum number of enemies.
+      if (--spawnCountdown < 0 || enemies.length < calcParam(MIN_ENEMIES)) spawnEnemy();
+
+      // Remove dead enemies.
+      for (let i = enemies.length - 1; i >= 0; i--) {
+        if (enemies[i].dead) enemies.splice(i, 1);
+      }
+
+      // Draw score
+      qx.color(7);
+      qx.locate(25, 1);
+      qx.print((score < 10 ? "000" : score < 100 ? "00" : score < 1000 ? "0" : "") + score);
+
+      // Game over?
+      if (gameOver) {
+        qx.frame(null);
+        showGameOver();
+      }
+    }
+
+    function updateAndDrawPlayer() {
+      // Apply acceleration based on up/down keys.
+      playerSpeed += (qx.key("ArrowRight") ? 1 : qx.key("ArrowLeft") ? -1 : 0) * ACCEL;
+      // Apply friction (reduce speed).
+      playerSpeed = playerSpeed > 0 ?
+        Math.max(0, playerSpeed - FRICTION) : Math.min(0, playerSpeed + FRICTION);
+      // Cap speed to maximum.
+      playerSpeed = qut.clamp(playerSpeed, -MAX_SPEED, MAX_SPEED);
+      // Apply speed to position.
+      playerX = qut.clamp(playerX + playerSpeed, MIN_X, MAX_X);
+      // Draw the spaceship.
+      qx.color(15);
+      qx.spr(CH_SPACESHIP, playerX, playerY);
+      // If there is no laser and the player presses Space (or the A button on mobile), shoot.
+      if (!laser && (qx.key(" ") || qx.key("ButtonA"))) shootLaser();
+    }
+
+    function updateAndDrawLaser() {
+      laser.y -= 16;
+      // Draw the laser. It's a double sprite (16 pixels tall).
+      qx.color(15);
+      qx.spr(CH_LASER, laser.x, laser.y);
+      qx.spr(CH_LASER, laser.x, laser.y + 8);
+      // Remove laser if it went off-screen.
+      if (laser.y < -16) laser = null;
+    }
+
+    function shootLaser() {
+      laser = {x: playerX, y: playerY };
+      qx.playSound(sfxLaser);
+    }
+
+    function spawnEnemy() {
+      const maxEnemies = calcParam(MAX_ENEMIES);
+      if (enemies.length >= maxEnemies) return;
+      const e = {
+        y: MIN_Y,
+        x: Math.round(MIN_X + Math.random() * (MAX_X - MIN_X)), ticks: 0,
+        speed: calcParam(ENEMY_SPEED),
+        color: calcParam(ENEMY_COLOR),
+        // If 1, we're moving right, if -1 we're moving left.
+        dir: Math.random() > 0.5 ? 1 : -1,
+        // If > 0, we are sliding vertically against a wall.
+        sliding: 0,
+      };
+      enemies.push(e);
+      spawnCountdown = calcParam(SPAWN_INTERVAL);
+    }
+
+    function updateAndDrawEnemy(e) {
+      ++e.ticks;
+      if (e.sliding > 0) {
+        // Sliding vertically against wall.
+        e.y += e.speed;
+        --e.sliding;
+      } else {
+        // Moving horizontally.
+        e.x += e.dir * e.speed;
+        // Hit a wall? If so, start a slide.
+        if (e.x <= MIN_X) { e.x = MIN_X; e.dir = 1; e.sliding = 8; }
+        if (e.x >= MAX_X) { e.x = MAX_X; e.dir = -1; e.sliding = 8; }
+      }
+
+      // Don't go past player
+      e.y = Math.min(e.y, playerY);
+
+      // Hit by laser?
+      if (laser && qut.intersectRects(LASER_COLL_RECT, ENEMY_COLL_RECT, laser.x, laser.y, e.x, e.y)) {
+        e.dead = true;
+        laser = null;
+        partFx = {x: e.x, y: e.y, ticks: 0, color: e.color};
+        score += 50;
+        qx.playSound(sfxHit);
+      }
+
+      // Hit player?
+      if (qut.intersectRects(ENEMY_COLL_RECT, PLAYER_COLL_RECT, e.x, e.y, playerX, playerY)) {
+        if (!gameOver) qx.playSound(sfxBlast);
+        gameOver = true;
+      }
+
+      // Draw.
+      const animFrame = Math.sign(e.ticks & 8);
+      const base = e.sliding ? CH_ENEMY_DOWN : e.dir > 0 ? CH_ENEMY_RIGHT : CH_ENEMY_LEFT;
+      qx.color(e.color);
+      qx.spr(base + animFrame, e.x, e.y);
+    }
+
+    function updateAndDrawPartFx() {
+      if (!partFx) return;
+      if (++partFx.ticks > 6) { partFx = null; return; }
+      qx.color(partFx.color);
+      qx.spr(0xe2 + Math.floor(partFx.ticks / 2), partFx.x, partFx.y);
+    }
+
+    function showGameOver() {
+      qx.color(15, 2);
+      qx.locate(0, 10);
+      qx.printBox(32, 3);
+      qx.locate(12, 11);
+      qx.print("GAME OVER");
+    }
+
+    function calcParam(paramSpec) {
+      return paramSpec[Math.min(Math.max(Math.floor(score / 500), 0), paramSpec.length - 1)];
+    }
+
+    window.addEventListener("load", () => qx.init(main));
+  </script>
+</head>
+<body>
+</body>
+</html>

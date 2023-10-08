@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Example - Sokoban</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+
+  <!-- Replace with a separate style.css file if you want -->
+  <style type="text/css">
+  body {
+    background: black;
+    color: white;
+    overscroll-behavior: none;
+  }
+  </style>
+
+  <!-- These 2 script tags are required for the 3D effect.
+       You can remove these if you disabled THREE_SETTINGS. -->
+  <script async src="https://unpkg.com/es-module-shims@1.8.0/dist/es-module-shims.js"></script>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.156.1/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.156.1/examples/jsm/"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import * as qx from "./qx82/qx.js";
+    import * as qxa from "./qx82/qxa.js";
+    import * as qut from "./qx82/qut.js";
+
+    const LEVELS = [
+      [
+        "  ##########".split(''),
+        " ##.bp     #".split(''),
+        " #..   b ###".split(''),
+        " #      ##  ".split(''),
+        " #      ##  ".split(''),
+        " #       #  ".split(''),
+        " #       #  ".split(''),
+        " #       #  ".split(''),
+        " #  ###  #  ".split(''),
+        " #### #b #  ".split(''),
+        "      #  #  ".split(''),
+        "      ####  ".split(''),
+      ],
+      [
+        " ####       ".split(''),
+        " #  ####### ".split(''),
+        " #     b  # ".split(''),
+        " #.#####  # ".split(''),
+        " #    p   # ".split(''),
+        " #   ##  ## ".split(''),
+        " #   ##  #  ".split(''),
+        " #.  ##  #  ".split(''),
+        " #  .## b#  ".split(''),
+        " # b ##  #  ".split(''),
+        " ##  #####  ".split(''),
+        "   ###      ".split(''),
+      ],
+      [
+        "  #####     ".split(''),
+        "###  .######".split(''),
+        "#   b.   b #".split(''),
+        "#       #  #".split(''),
+        "##  ### # ##".split(''),
+        " #b # # # # ".split(''),
+        " #  # #.# # ".split(''),
+        " #  # ### # ".split(''),
+        " ####   # # ".split(''),
+        "        #p# ".split(''),
+        "        # # ".split(''),
+        "        ### ".split(''),
+      ],
+      [
+        "     ####   ".split(''),
+        "  ####  ##  ".split(''),
+        " ##.#.   #  ".split(''),
+        "##  ###  #  ".split(''),
+        "##b ### ##  ".split(''),
+        "# b  .. ####".split(''),
+        "#  p## b   #".split(''),
+        "##b.##   b #".split(''),
+        " #      ####".split(''),
+        " #   ####   ".split(''),
+        " #   #      ".split(''),
+        " #####      ".split(''),
+      ],
+      [
+        " ####       ".split(''),
+        "##  #####   ".split(''),
+        "# b .#  ### ".split(''),
+        "#    b    # ".split(''),
+        "#### #   .# ".split(''),
+        "  ##    . # ".split(''),
+        "###. b .b # ".split(''),
+        "# b b   .b# ".split(''),
+        "# #  ###  # ".split(''),
+        "# p .# #### ".split(''),
+        "######      ".split(''),
+        "            ".split(''),
+      ]
+    ];
+
+    const TILES = {
+      "#": { color: 8, char: 0x87 },   // Wall
+      ".": { color: 4, char: 0x8b },   // Target
+      // NOTE: the remaining stuff (boxes, player) are objects, they are not tiles in the map.
+    }
+
+    const LEVEL_SIZE = 12;
+    const DRAW_OFFSET_X = 10;
+    const DRAW_OFFSET_Y = 5;
+
+    // Current level number.
+    let curLevelNumber = 0;
+    // Current level object (LEVELS[curLevelNumber])
+    let curLevel = null;
+    // Player position.
+    let px = 3, py = 3;
+    // If true, the player is facing left instead of right.
+    let facingLeft = false;
+    // Positions of boxes. Each is an object with {x,y}
+    let boxes = [];
+    // Sound effects
+    let sfxStep = null, sfxPush = null, sfxLevelUp = null;
+
+    async function main() {
+      qx.cls();
+      qx.print("Loading...");
+      sfxStep = await qxa.loadSound("assets/step.wav");
+      sfxPush = await qxa.loadSound("assets/push.wav");
+      sfxLevelUp = await qxa.loadSound("assets/levelup.wav");
+      setUpLevel(0);
+      while (true) {
+        drawEverything();
+        await movePlayer();
+        await checkEndOfLevel();
+      }
+    }
+
+    function drawEverything() {
+      qx.cls();
+      drawMap();
+      drawBoxes();
+      drawPlayer();
+    }
+
+    function drawMap() {
+      qx.color(7, 0);
+      qx.cls();
+      qx.locate(13, 1);
+      qx.color(14);
+      qx.print(`SOKOBAN\n`);
+      qx.color(8);
+      qx.print(`LEVEL ${curLevelNumber+1}`);
+      qx.locate(1, 20);
+      qx.print("Push boxes (\x89) onto dots (\x8b)\nPress B to reset level.");
+      for (let y = 0; y < LEVEL_SIZE; y++) {
+        qx.locate(DRAW_OFFSET_X, DRAW_OFFSET_Y + y);
+        for (let x = 0; x < LEVEL_SIZE; x++) {
+          const cell = curLevel[y][x];
+          const tile = TILES[cell];
+          qx.color(tile ? tile.color : 0);
+          qx.printChar(tile ? tile.char : 0x20);
+        }
+      }
+    }
+
+    function drawBoxes() {
+      boxes.forEach(box => {
+        qx.locate(DRAW_OFFSET_X + box.x, DRAW_OFFSET_Y + box.y);
+        // If the box is on a target, make it green; otherwise, black.
+        qx.color(curLevel[box.y][box.x] === "." ? 12 : 14);
+        qx.printChar(0x89);
+      });
+    }
+
+    function drawPlayer() {
+      qx.locate(DRAW_OFFSET_X + px, DRAW_OFFSET_Y + py);
+      qx.color(15);
+      qx.printChar(facingLeft ? 0xc1 : 0xc0); // 0xc0 is the player facing right, 0xc1 is left.
+    }
+
+    async function movePlayer() {
+      const keyName = await qxa.key();
+      if (keyName === "ButtonB" || keyName === "b") setUpLevel(curLevelNumber); // Reset level
+      if (keyName === "ArrowLeft") facingLeft = true;
+      if (keyName === "ArrowRight") facingLeft = false;
+
+      // Where does the player want to go?
+      const candX = px + (keyName === "ArrowRight" ? 1 : 0) + (keyName === "ArrowLeft" ? -1 : 0);
+      const candY = py + (keyName === "ArrowDown" ? 1 : 0) + (keyName === "ArrowUp" ? -1 : 0);
+      if (candX === px && candY === py) return; // Player doesn't want to move.
+
+      const boxToPush = boxes.find(box => box.x === candX && box.y === candY);
+      let pushed = false, moved = false;
+      if (boxToPush) pushed = tryPushBox(boxToPush);
+      if (isCellFree(candX, candY)) {
+        px = candX, py = candY;
+        moved = true;
+      }
+      if (pushed) qx.playSound(sfxPush);
+      else if (moved) qx.playSound(sfxStep);
+    }
+
+    function tryPushBox(box) {
+      const newX = box.x + Math.sign(box.x - px), newY = box.y + Math.sign(box.y - py);
+      if (isCellFree(newX, newY)) {
+        box.x = newX, box.y = newY;
+        return true;
+      }
+      return false;
+    }
+
+    function isCellFree(x, y) {
+      return curLevel[y][x] !== "#" && !boxes.find(box => box.x === x && box.y === y);
+    }
+
+    function setUpLevel(levelNumber) {
+      curLevelNumber = levelNumber;
+      curLevel = LEVELS[curLevelNumber];
+      boxes = [];
+      for (let y = 0; y < LEVEL_SIZE; y++) {
+        for (let x = 0; x < LEVEL_SIZE; x++) {
+          const thisCell = curLevel[y][x];
+          if (thisCell === "p") px = x, py = y;  // Player start position.
+          else if (thisCell === "b") boxes.push({x,y});  // Box
+        }
+      }
+    }
+
+    async function checkEndOfLevel() {
+      // If there are any boxes that are not on a target, the level hasn't ended.
+      if (boxes.find(box => curLevel[box.y][box.x] !== ".")) return;
+      drawEverything();
+      // Otherwise, congratulate and move on to the next one.
+      qx.color(15, 4);
+      qx.locate(0, 19);
+      qx.printBox(32, 4);
+      qx.locate(1, 20);
+      qx.print("Level complete.\nPress ENTER to continue.");
+      qx.playSound(sfxLevelUp);
+      while ("Enter" !== await qxa.key()) {}
+      if (curLevelNumber + 1 < LEVELS.length) {
+        // Advance to next level.
+        setUpLevel(curLevelNumber + 1);
+      } else {
+        // User has beat all the levels.
+        qx.cls();
+        qx.locate(1, 10);
+        qx.print("CONGRATULATIONS!\nYou beat all the levels!");
+        while ("Enter" !== await qxa.key()) {}
+        setUpLevel(0);
+      }
+    }
+
+    window.addEventListener("load", () => qx.init(main));
+  </script>
+</head>
+<body>
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Example - Maze</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+
+  <!-- Replace with a separate style.css file if you want -->
+  <style type="text/css">
+  body {
+    background: black;
+    color: white;
+    overscroll-behavior: none;
+  }
+  </style>
+
+  <!-- These 2 script tags are required for the 3D effect.
+       You can remove these if you disabled THREE_SETTINGS. -->
+  <script async src="https://unpkg.com/es-module-shims@1.8.0/dist/es-module-shims.js"></script>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.156.1/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.156.1/examples/jsm/"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import * as qx from "./qx82/qx.js";
+    import * as qxa from "./qx82/qxa.js";
+    import * as qut from "./qx82/qut.js";
+
+    const MAZE = [
+      "                                ".split(''),
+      " ############################## ".split(''),
+      " #......#............#........# ".split(''),
+      " #......##+#######...#........# ".split(''),
+      " #......#........#...+........# ".split(''),
+      " ###+######...###....#........# ".split(''),
+      " #......+.....########+######## ".split(''),
+      " #......#######.........#.....# ".split(''),
+      " ########....#......#####.....# ".split(''),
+      " #..#...#....#......+...####..# ".split(''),
+      " #..###+#....##.....#.........# ".split(''),
+      " #...+........+.....#.........# ".split(''),
+      " #######+###+################.# ".split(''),
+      " #........##..#...+......#..#.# ".split(''),
+      " #.........#..#...#......#..#.# ".split(''),
+      " ##+###+####..#...#......#..### ".split(''),
+      " #...#...######+#####....#....+ ".split(''),
+      " #...#...+...#....#.####+#....# ".split(''),
+      " #...#########....#......#....# ".split(''),
+      " #...+.......+....#......+....# ".split(''),
+      " ############################## ".split(''),
+    ];
+    const MAZE_HEIGHT = MAZE.length;
+    const MAZE_WIDTH = MAZE[0].length;
+
+    // Player position.
+    let px = 2, py = 2;
+    // If true, the player is facing left instead of right.
+    let facingLeft = false;
+    // Sound effects.
+    let sfxStep, sfxWin, sfxDoor;
+
+    async function main() {
+      qx.cls();
+      qx.print("Loading...");
+      sfxStep = await qxa.loadSound("assets/step.wav");
+      sfxWin = await qxa.loadSound("assets/levelup.wav");
+      sfxDoor = await qxa.loadSound("assets/hit.wav");
+      qx.cls();
+      while (true) {
+        drawMap();
+        drawPlayer();
+        // Did the player exit the maze? If so, win the game.
+        if (px >= 30) { await youWon(); continue; }
+        // Move the player based on what key they press.
+        await movePlayer();
+      }
+    }
+
+    function drawMap() {
+      qx.color(7, 0);
+      qx.cls();
+      for (let y = 0; y < MAZE_HEIGHT; y++) {
+        qx.locate(0, y);
+        for (let x = 0; x < MAZE_WIDTH; x++) {
+          const cell = MAZE[y][x];
+
+          // Choose the draw color based on the distance to the player.
+          const distToPlayer = qut.dist2d(px, py, x, y);
+          qx.color(distToPlayer < 2 ? 15 :
+            distToPlayer < 3 ? 7 : distToPlayer < 4 ? 8 : 0);
+
+          // For decorative purposes, use some graphical characters instead of the ASCII ones.
+          qx.printChar(cell === "#" ? 0x87 : cell === "." ? 0xDB : cell === "+" ? 0xC8 : " ");
+        }
+      }
+    }
+
+    function drawPlayer() {
+      qx.locate(px, py);
+      qx.color(15, 0);
+      qx.printChar(facingLeft ? 0xc1 : 0xc0); // 0xc0 is the player facing right, 0xc1 is left.
+    }
+
+    async function movePlayer() {
+      const keyName = await qxa.key();
+      if (keyName === "ArrowLeft") facingLeft = true;
+      if (keyName === "ArrowRight") facingLeft = false;
+      // Where does the player want to go?
+      const candX = px + (keyName === "ArrowRight" ? 1 : 0) + (keyName === "ArrowLeft" ? -1 : 0);
+      const candY = py + (keyName === "ArrowDown" ? 1 : 0) + (keyName === "ArrowUp" ? -1 : 0);
+      if (candX === px && candY === py) return;
+      switch (MAZE[candY][candX]) {
+        case ".": // Regular floor: we can move there.
+          px = candX; py = candY;
+          qx.playSound(sfxStep);
+          break;
+        case "+": // Door: we can open it. It becomes a regular floor tile.
+          MAZE[candY][candX] = ".";
+          qx.playSound(sfxDoor);
+          break;
+        default: // Everything else is a wall and we can't move there.
+          break;
+      }
+    }
+
+    async function youWon() {
+      qx.playSound(sfxWin);
+      await qxa.dialog("Congratulations!");
+      // As a reward, you get to play again.
+      px = 2; py = 2;
+    }
+
+    window.addEventListener("load", () => qx.init(main));
+  </script>
+</head>
+<body>
+</body>
+</html>

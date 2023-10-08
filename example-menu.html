@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Example - Menu</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+
+  <!-- Replace with a separate style.css file if you want -->
+  <style type="text/css">
+  body {
+    background: black;
+    color: white;
+    overscroll-behavior: none;
+  }
+  </style>
+
+  <!-- These 2 script tags are required for the 3D effect.
+       You can remove these if you disabled THREE_SETTINGS. -->
+  <script async src="https://unpkg.com/es-module-shims@1.8.0/dist/es-module-shims.js"></script>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.156.1/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.156.1/examples/jsm/"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import * as qx from "./qx82/qx.js";
+    import * as qxa from "./qx82/qxa.js";
+
+    async function main() {
+      while (true) {
+        // Clear screen using white over blue
+        qx.color(7, 1);
+        qx.cls();
+        qx.locate(1, 1);
+        qx.print("System Boot Menu\n\n");
+        qx.color(1, 7);
+        // Show a menu of options.
+        const choice = await qxa.menu(["Install OS", "Format disk", "Eject disk", "Fix disk"]);
+        qx.color(7, 2);
+        // Show a message box depending on the choice.
+        switch (choice) {
+          case 0: await qxa.dialog("128kB of memory needed", ["OK"]); break;
+          case 1:
+            if (await qxa.dialog("Are you sure?", ["No","Yes"])) await formatDisk();
+            break;
+          case 2: await qxa.dialog("Can't eject. Disk in use."); break;
+          case 3: await qxa.dialog("No problems detected."); break;
+        }
+      }
+    }
+
+    async function formatDisk() {
+      qx.color(7, 1);
+      qx.cls();
+      qx.locate(1, 2);
+      qx.print("Formating disk...\n");
+      for (let i = 0; i <= 80; i += 10) {
+        qx.locate(1, 4);
+        qx.print(`Track ${i}/80...`);
+        await qxa.wait(0.5);
+      }
+      qx.color(7, 4);
+      await qxa.dialog("Successfully formatted");
+    }
+
+    window.addEventListener("load", () => qx.init(main));
+  </script>
+</head>
+<body>
+</body>
+</html>

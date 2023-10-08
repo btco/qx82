@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Example - Image</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+
+  <!-- Replace with a separate style.css file if you want -->
+  <style type="text/css">
+  body {
+    background: black;
+    color: white;
+    overscroll-behavior: none;
+  }
+  </style>
+
+  <!-- These 2 script tags are required for the 3D effect.
+       You can remove these if you disabled THREE_SETTINGS. -->
+  <script async src="https://unpkg.com/es-module-shims@1.8.0/dist/es-module-shims.js"></script>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.156.1/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.156.1/examples/jsm/"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import * as qx from "./qx82/qx.js";
+    import * as qxa from "./qx82/qxa.js";
+
+    async function main() {
+      qx.color(7, 0);
+      qx.cls();
+      qx.locate(1, 1);
+      qx.print("Loading...");
+      const img = await qxa.loadImage("assets/castle.png");
+
+      qx.cls();
+      qx.drawImage(8, 24, img);
+      qx.locate(1, 1);
+
+      qx.print("You stand in front of the\ncastle. Will you enter?");
+
+      qx.locate(22, 14);
+      const choice = await qxa.menu(["Enter", "Leave", "Look", "Cast", "Rest"]);
+
+      // TODO: do something interesting based on the choice.
+      // Here we just print a fascinating ending according to what the user did:
+
+      qx.cls();
+      qx.locate(1, 1);
+      switch (choice) {
+        case 0: qx.print("You enter the castle.\nThe evil villain flees.\n\nTHE END"); break;
+        case 1: qx.print("You leave the area.\nAnother hero saves the\nkingdom.\n\nTHE END"); break;
+        case 2: qx.print("As you're looking around,\na dragon eats you.\nYou died.\n\nTHE END"); break;
+        case 3: qx.print("You try to cast a spell,\nthen you remember you're\nnot a wizard.\n\nTHE END"); break;
+        case 4: qx.print("You lie down and rest.\nSomeone else saves the\nkingdom.\n\nTHE END"); break;
+      }
+    }
+
+    window.addEventListener("load", () => qx.init(main));
+  </script>
+</head>
+<body>
+</body>
+</html>
