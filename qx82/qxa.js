@@ -138,6 +138,7 @@ export async function loadSound(url) {
     const audio = new Audio();
     audio.oncanplaythrough = () => resolver(audio);
     audio.src = url;
+    audio.load();
   });
 }
 
