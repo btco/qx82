@@ -149,14 +149,19 @@ function setUpButton(buttonId, buttonKeyName) {
     button.style.display = "none";
     return;
   }
-  button.addEventListener("mousedown", () => handleButtonEvent(buttonKeyName, true));
-  button.addEventListener("touchdown", () => handleButtonEvent(buttonKeyName, true));
-  button.addEventListener("mouseup", () => handleButtonEvent(buttonKeyName, false));
-  button.addEventListener("touchup", () => handleButtonEvent(buttonKeyName, false));
+  button.addEventListener("mousedown",
+    (e) => handleButtonEvent(buttonKeyName, true, e));
+  button.addEventListener("touchdown",
+    (e) => handleButtonEvent(buttonKeyName, true, e));
+  button.addEventListener("mouseup",
+    (e) => handleButtonEvent(buttonKeyName, false, e));
+  button.addEventListener("touchup",
+    (e) => handleButtonEvent(buttonKeyName, false, e));
 }
 
-function handleButtonEvent(buttonKeyName, down) {
+function handleButtonEvent(buttonKeyName, down, evt) {
   if (down) inputSys.onKeyDown({ key: buttonKeyName });
   else inputSys.onKeyUp({ key: buttonKeyName });
+  evt.preventDefault();
 }
 
