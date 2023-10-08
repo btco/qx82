@@ -242,7 +242,10 @@
       qx.locate(1, 20);
       qx.print("Level complete.\nPress ENTER to continue.");
       qx.playSound(sfxLevelUp);
-      while ("Enter" !== await qxa.key()) {}
+      while (true) {
+        const key = await qxa.key();
+        if (key === "Enter" || key === "ButtonA") break;
+      }
       if (curLevelNumber + 1 < LEVELS.length) {
         // Advance to next level.
         setUpLevel(curLevelNumber + 1);
