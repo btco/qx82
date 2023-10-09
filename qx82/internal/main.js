@@ -326,11 +326,11 @@ function updateLayout2d() {
   CONFIG.SCREEN_REAL_WIDTH = CONFIG.SCREEN_WIDTH * scale;
   CONFIG.SCREEN_REAL_HEIGHT = CONFIG.SCREEN_HEIGHT * scale;
 
-  //realCanvas.width = CONFIG.SCREEN_REAL_WIDTH;
-  //realCanvas.height = CONFIG.SCREEN_REAL_HEIGHT;
   realCanvas.style.width = CONFIG.SCREEN_EL_WIDTH + "px";
   realCanvas.style.height = CONFIG.SCREEN_EL_HEIGHT + "px";
   if (!CONFIG.THREE_SETTINGS) {
+    realCanvas.width = CONFIG.SCREEN_REAL_WIDTH;
+    realCanvas.height = CONFIG.SCREEN_REAL_HEIGHT;
     realCtx = realCanvas.getContext("2d");
     realCtx.imageSmoothingEnabled = false;
   }
