@@ -22,12 +22,22 @@ const VJOY_CSS = `
     -webkit-touch-callout: none;
   }
 
-  #vjoy-container-left {
+  #vjoy-scrim {
     position: fixed;
-    bottom: 64px;
-    left: 64px;
-    width: 30vmin;
-    height: 30vmin;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: 0;
+    pointer-events: all;
+  }
+
+  #vjoy-container-left {
+    box-sizing: border-box;
+    position: fixed;
+    bottom: 16px;
+    left: 16px;
+    width: 40vmin;
+    height: 40vmin;
     user-select: none;
     touch-callout: none;
     -webkit-user-select: none;
@@ -35,11 +45,12 @@ const VJOY_CSS = `
   }
 
   #vjoy-container-right {
+    box-sizing: border-box;
     position: fixed;
-    bottom: 64px;
-    right: 64px;
-    width: 30vmin;
-    height: 30vmin;
+    bottom: 16px;
+    right: 16px;
+    width: 40vmin;
+    height: 40vmin;
     user-select: none;
     touch-callout: none;
     -webkit-user-select: none;
@@ -51,7 +62,7 @@ const VJOY_CSS = `
     flex-direction: row;
     align-items: center;
     justify-content: center;
-    background: #eee;
+    background: #444;
     border: none;
     font: bold 14px monospace;
     color: #888;
@@ -66,18 +77,18 @@ const VJOY_CSS = `
 
   #vjoy-button-up {
     position: absolute;
-    left: 35%;
+    left: 30%;
     top: 0px;
-    width: 30%;
+    width: 40%;
     height: 45%;
     border-radius: 0px 0px 50% 50%;
   }
 
   #vjoy-button-down {
     position: absolute;
-    left: 35%;
+    left: 30%;
     bottom: 0px;
-    width: 30%;
+    width: 40%;
     height: 45%;
     border-radius: 50% 50% 0px 0px;
   }
@@ -85,43 +96,43 @@ const VJOY_CSS = `
   #vjoy-button-left {
     position: absolute;
     left: 0px;
-    bottom: 35%;
+    bottom: 30%;
     width: 45%;
-    height: 30%;
+    height: 40%;
     border-radius: 0px 50% 50% 0px;
   }
 
   #vjoy-button-right {
     position: absolute;
     right: 0px;
-    bottom: 35%;
+    bottom: 30%;
     width: 45%;
-    height: 30%;
+    height: 40%;
     border-radius: 50% 0px 0px 50%;
   }
 
   #vjoy-button-pri {
     position: absolute;
     right: 0px;
-    top: 35%;
-    width: 45%;
-    height: 45%;
+    top: 30%;
+    width: 50%;
+    height: 50%;
     border-radius: 50%;
   }
 
   #vjoy-button-sec {
     position: absolute;
     left: 0px;
-    top: 35%;
-    width: 45%;
-    height: 45%;
+    top: 30%;
+    width: 50%;
+    height: 50%;
     border-radius: 50%;
   }
 
   #vjoy-button-ter {
     position: fixed;
-    right: 5vw;
-    bottom: 5vw;
+    right: 0px;
+    bottom: 0px;
     width: 10vw;
     height: 8vmin;
     border-radius: 8px;
@@ -138,6 +149,11 @@ export function setup() {
   styleEl.setAttribute("type", "text/css");
   styleEl.innerText = VJOY_CSS;
   document.body.appendChild(styleEl);
+
+  const scrim = document.createElement("div");
+  scrim.setAttribute("id", "vjoy-scrim");
+  scrim.addEventListener("touchstart", e => e.preventDefault());
+  document.body.appendChild(scrim);
 
   const leftContainer = document.createElement("div");
   leftContainer.setAttribute("id", "vjoy-container-left");
