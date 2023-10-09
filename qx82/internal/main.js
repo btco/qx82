@@ -79,6 +79,7 @@ async function asyncInit(callback) {
 
   // Set up the real canvas (the one that really exists onscreen).
   realCanvas = document.createElement("canvas");
+  realCanvas.addEventListener("touchstart", e => e.preventDefault());
   document.body.appendChild(realCanvas);
 
   // Set up the virtual canvas (the one we render to).

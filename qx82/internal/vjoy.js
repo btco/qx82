@@ -3,19 +3,25 @@ import {CONFIG} from "../config.js";
 import { inputSys } from "./main.js";
 
 const LEFT_VJOY_HTML = `
-  <button id='vjoy-button-up' class='vjoy-button'></button>
-  <button id='vjoy-button-down' class='vjoy-button'></button>
-  <button id='vjoy-button-left' class='vjoy-button'></button>
-  <button id='vjoy-button-right' class='vjoy-button'></button>
+  <div id='vjoy-button-up' class='vjoy-button'></div>
+  <div id='vjoy-button-down' class='vjoy-button'></div>
+  <div id='vjoy-button-left' class='vjoy-button'></div>
+  <div id='vjoy-button-right' class='vjoy-button'></div>
 `;
 
 const RIGHT_VJOY_HTML = `
-  <button id='vjoy-button-pri' class='vjoy-button'>A</button>
-  <button id='vjoy-button-sec' class='vjoy-button'>B</button>
-  <button id='vjoy-button-ter' class='vjoy-button'>=</button>
+  <div id='vjoy-button-pri' class='vjoy-button'>A</div>
+  <div id='vjoy-button-sec' class='vjoy-button'>B</div>
+  <div id='vjoy-button-ter' class='vjoy-button'>=</div>
 `;
 
 const VJOY_CSS = `
+  * {
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+  }
+
   #vjoy-container-left {
     position: fixed;
     bottom: 64px;
@@ -23,6 +29,9 @@ const VJOY_CSS = `
     width: 30vmin;
     height: 30vmin;
     user-select: none;
+    touch-callout: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
   }
 
   #vjoy-container-right {
@@ -32,14 +41,24 @@ const VJOY_CSS = `
     width: 30vmin;
     height: 30vmin;
     user-select: none;
+    touch-callout: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
   }
 
   .vjoy-button {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
     background: #eee;
     border: none;
     font: bold 14px monospace;
-    text-align: center;
     color: #888;
+    user-select: none;
+    touch-callout: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
   }
   .vjoy-button:active {
     background: #888;
@@ -141,6 +160,10 @@ function continueSetup() {
   setUpButton("vjoy-button-pri", "ButtonA");
   setUpButton("vjoy-button-sec", "ButtonB");
   setUpButton("vjoy-button-ter", "Escape");
+
+  // Prevent touches on the document body from doing what they usually do (opening
+  // context menus, selecting stuff, etc).
+  document.body.addEventListener("touchstart", e => e.preventDefault());
 }
 
 function setUpButton(buttonId, buttonKeyName) {
@@ -153,12 +176,13 @@ function setUpButton(buttonId, buttonKeyName) {
   }
   button.addEventListener("mousedown",
     (e) => handleButtonEvent(buttonKeyName, true, e));
-  button.addEventListener("touchdown",
+  button.addEventListener("touchstart",
     (e) => handleButtonEvent(buttonKeyName, true, e));
   button.addEventListener("mouseup",
     (e) => handleButtonEvent(buttonKeyName, false, e));
-  button.addEventListener("touchup",
+  button.addEventListener("touchend",
     (e) => handleButtonEvent(buttonKeyName, false, e));
+  button.addEventListener("contextmenu", e => e.preventDefault());
 }
 
 function handleButtonEvent(buttonKeyName, down, evt) {
