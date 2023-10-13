@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Example - Puzzle</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+
+  <!-- Replace with a separate style.css file if you want -->
+  <style type="text/css">
+  body {
+    background: black;
+    color: white;
+  }
+  </style>
+
+  <!-- These 2 script tags are required for the 3D effect.
+       You can remove these if you disabled THREE_SETTINGS. -->
+  <script async src="https://unpkg.com/es-module-shims@1.8.0/dist/es-module-shims.js"></script>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.156.1/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.156.1/examples/jsm/"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import * as qx from "./qx82/qx.js";
+    import * as qxa from "./qx82/qxa.js";
+
+    // Full image.
+    let fullImg;
+    // Size of a puzzle piece.
+    const PIECE_WIDTH = 64, PIECE_HEIGHT = 42;
+    // How many rows and columns of puzzle pieces.
+    const GRID_ROWS = 4, GRID_COLS = 4;
+    // The current puzzle layout. -1 is the empty cell.
+    let pieces = [
+       [  4,  0,  1,  3, ],
+       [  8,  6,  2,  7, ],
+       [  5, 13,  9, 11, ],
+       [ -1, 12, 10, 14, ]
+    ];
+    // Current row/column.
+    let curRow = 0, curCol = 0;
+
+    async function main() {
+      qx.color(7, 0);
+      qx.cls();
+      qx.locate(1, 1);
+      qx.print("Loading...");
+      fullImg = await qxa.loadImage("assets/colmar.png");
+      while (true) {
+        drawBoard();
+        await processInput();
+      }
+    }
+
+    function drawBoard() {
+      qx.cls();
+      // Draw each piece.
+      for (let i = 0; i < GRID_ROWS; i++) {
+        for (let j = 0; j < GRID_COLS; j++) {
+          const pieceNumber = pieces[i][j];
+          drawPiece(pieceNumber, j * PIECE_WIDTH, i * PIECE_HEIGHT,
+            i === curRow && j === curCol);
+        }
+      }
+      qx.locate(1, 22);
+      if (hasWon()) {
+        qx.color(12, 0);
+        qx.print("* YOU WON! CONGRATULATIONS! *");
+      } else {
+        qx.color(7, 0);
+        qx.print("Arrows: select, Enter: slide");
+      }
+    }
+
+    function drawPiece(pieceNumber, x, y, isCurrent) {
+      // The piece number tells us what part of the image to draw.
+      const row = Math.floor(pieceNumber / GRID_COLS);
+      const col = pieceNumber % GRID_COLS;
+      // Draw the rectangular part of the image that corresponds to
+      // the piece.
+      qx.drawImageRect(x, y, fullImg,
+          col * PIECE_WIDTH, row * PIECE_HEIGHT, PIECE_WIDTH, PIECE_HEIGHT);
+      qx.color(isCurrent ? 14 : 0);
+      qx.drawRect(x, y, PIECE_WIDTH, PIECE_HEIGHT);
+    }
+
+    async function processInput() {
+      const k = await qxa.key();
+      // If the player pressed an arrow key, move cursor.
+      if (k === "ArrowDown") curRow = (curRow + 1) % GRID_ROWS;
+      if (k === "ArrowUp") curRow = (curRow - 1 + GRID_ROWS) % GRID_ROWS;
+      if (k === "ArrowLeft") curCol = (curCol - 1 + GRID_COLS) % GRID_COLS;
+      if (k === "ArrowRight") curCol = (curCol + 1) % GRID_COLS;
+      // If player pressed Enter or the A button, swap the piece
+      // if it's adjacent to an empty space.
+      if (k === "Enter" || k === "ButtonA") swapCurPiece();
+    }
+
+    function swapCurPiece() {
+      const neighborDirs =
+        [ {c:-1,r:0}, {c:1,r:0}, {c:0,r:-1}, {c:0,r:1} ];
+      for (const dir of neighborDirs) {
+        const newRow = curRow + dir.r;
+        const newCol = curCol + dir.c;
+        console.warn(`${curRow} + ${dir.r} = ${newRow}, ${curCol} + ${dir.c} = ${newCol}`);
+        if (newRow >= 0 && newRow < GRID_ROWS && newCol >= 0 &&
+            newCol < GRID_COLS && pieces[newRow][newCol] === -1) {
+          // Swap it with the empty space.
+          pieces[newRow][newCol] = pieces[curRow][curCol];
+          pieces[curRow][curCol] = -1;
+          return;
+        }
+      }
+    }
+
+    function hasWon() {
+      // We have won if all pieces are in 0, 1, 2, 3, ... order,
+      // except the last cell which should be -1.
+      const flat = pieces.flat();
+      for (let i = 0; i < GRID_ROWS * GRID_COLS - 1; i++) {
+        if (flat[i] !== i) return false;
+      }
+      return true;
+    }
+
+    window.addEventListener("load", () => qx.init(main));
+  </script>
+</head>
+<body>
+</body>
+</html>

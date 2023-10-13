@@ -164,9 +164,11 @@ export function printBox(widthCols, heightRows, fill = true, borderChar = 0x80) 
 
 /// Draws an image (previously loaded with qxa.loadImage).
 /// x: integer
-///   The x coordinate (in pixels) of the top-left of the image.
+///   The x coordinate (in pixels) of the point on the screen
+///   where the top-left of the image will be drawn.
 /// y: integer
-///   The y coordinate (in pixels) of the top-left of the image.
+///   The y coordinate (in pixels) of the point on the screen
+///   where the top-left of the image will be drawn.
 /// image: Image
 ///   The image to draw.
 export function drawImage(x, y, image) {
@@ -174,6 +176,78 @@ export function drawImage(x, y, image) {
   qut.checkNumber("x", x);
   qut.checkNumber("y", y);
   main.drawImage(image, x, y);
+}
+
+/// Draws a rectangular part of an image (previously loaded with qxa.loadImage).
+/// x: integer
+///   The x coordinate (in pixels) of the point on the screen
+///   where the top-left of the image will be drawn.
+/// y: integer
+///   The y coordinate (in pixels) of the point on the screen
+///   where the top-left of the image will be drawn.
+/// image: Image
+///   The image to draw.
+/// srcX: integer
+///   The x coordinate (in pixels) of the top-left of the rectangle
+///   to be drawn.
+/// srcY: integer
+///   The y coordinate (in pixels) of the top-left of the rectangle
+///   to be drawn.
+/// width: integer
+///   The width in pixels of the rectangle to be drawn.
+/// height: integer
+///   The height in pixels of the rectangle to be drawn.
+export function drawImageRect(x, y, image, srcX, srcY, width, height) {
+  qut.checkInstanceOf("image", image, HTMLImageElement);
+  qut.checkNumber("x", x);
+  qut.checkNumber("y", y);
+  qut.checkNumber("srcX", srcX);
+  qut.checkNumber("srcY", srcY);
+  qut.checkNumber("width", width);
+  qut.checkNumber("height", height);
+  main.drawImage(image, x, y, srcX, srcY, width, height);
+}
+
+/// Draws a rectangle (border only). The rectangle is drawn using the
+/// current foreground color.
+///
+/// x: integer
+///   The x coordinate (in pixels) of the top-left corner of
+///   the rectangle.
+/// y: integer
+///   The y coordinate (in pixels) of the top-left corner of
+///   the rectangle.
+/// width: integer
+///   The width in pixels of the rectangle.
+/// height: integer
+///   The height in pixels of the rectangle.
+export function drawRect(x, y, width, height) {
+  qut.checkNumber("x", x);
+  qut.checkNumber("y", y);
+  qut.checkNumber("width", width);
+  qut.checkNumber("height", height);
+  main.drawRect(x, y, width, height);
+}
+
+/// Draws a filled rectangle. The rectangle is drawn and filled
+/// using the current foreground (not background!) color.
+///
+/// x: integer
+///   The x coordinate (in pixels) of the top-left corner of
+///   the rectangle.
+/// y: integer
+///   The y coordinate (in pixels) of the top-left corner of
+///   the rectangle.
+/// width: integer
+///   The width in pixels of the rectangle.
+/// height: integer
+///   The height in pixels of the rectangle.
+export function fillRect(x, y, width, height) {
+  qut.checkNumber("x", x);
+  qut.checkNumber("y", y);
+  qut.checkNumber("width", width);
+  qut.checkNumber("height", height);
+  main.fillRect(x, y, width, height);
 }
 
 /// Plays a sound (previously loaded with qxa.playSound).

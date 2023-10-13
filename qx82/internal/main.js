@@ -245,11 +245,46 @@ export function getNow() {
     window.performance.now() : (new Date()).getTime();
 }
 
-export function drawImage(img, x, y) {
+export function drawImage(img, x, y, srcX, srcY, width, height) {
   qut.checkInstanceOf("img", img, HTMLImageElement);
   qut.checkNumber("x", x);
   qut.checkNumber("y", y);
-  ctx.drawImage(img, x, y);
+  if (srcX !== undefined) qut.checkNumber("srcX", srcX);
+  if (srcY !== undefined) qut.checkNumber("srcY", srcY);
+  if (width !== undefined) qut.checkNumber("width", width);
+  if (height !== undefined) qut.checkNumber("height", height);
+  if (srcX !== undefined && srcY !== undefined &&
+      width !== undefined && height !== undefined) {
+    ctx.drawImage(img, srcX, srcY, width, height, x, y, width, height);
+  } else {
+    ctx.drawImage(img, x, y);
+  }
+}
+
+export function drawRect(x, y, width, height) {
+  qut.checkNumber("x", x);
+  qut.checkNumber("y", y);
+  qut.checkNumber("width", width);
+  qut.checkNumber("height", height);
+  let oldStrokeStyle = ctx.strokeStyle;
+  ctx.strokeStyle = getColorHex(drawState.fgColor);
+  // Must add 0.5 to x and y so we draw in the "middle"
+  // of the pixel. Weird canvas floating-point coords.
+  ctx.strokeRect(Math.round(x) + 0.5, Math.round(y) + 0.5,
+    Math.round(width) - 1, Math.round(height) - 1);
+  ctx.strokeStyle = oldStrokeStyle;
+}
+
+export function fillRect(x, y, width, height) {
+  qut.checkNumber("x", x);
+  qut.checkNumber("y", y);
+  qut.checkNumber("width", width);
+  qut.checkNumber("height", height);
+  ctx.fillStyle = getColorHex(drawState.fgColor);
+  // Must add 0.5 to x and y so we draw in the "middle"
+  // of the pixel. Weird canvas floating-point coords.
+  ctx.fillRect(Math.round(x) + 0.5, Math.round(y) + 0.5,
+    Math.round(width) - 1, Math.round(height) - 1);
 }
 
 async function doFrame() {
