@@ -4,6 +4,13 @@ QX82 is a tiny Javascript engine that lets you create games and experiences insp
 For more information, check out the
 [QX82 site](https://btco.github.io/qx82).
 
+![Screenshot 0](https://btco.github.io/qx82/images/screenshot2.webp)
+
+## How To Use
+
+See the [How-To section](https://btco.github.io/qx82/howto.html) and
+the [API reference](https://btco.github.io/qx82/reference.html) in the QX82 website.
+
 ## Special Thanks
 (In reverse cron order)
 
