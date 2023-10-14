@@ -87,6 +87,7 @@ export async function dialog(prompt, choices = ["OK"]) {
 /// seconds: number
 ///   How long to wait for, in seconds.
 export async function wait(seconds) {
+  main.preflight("wait");
   qut.checkNumber("seconds", seconds);
   qx.render();
   await new Promise(resolve => setTimeout(resolve, Math.round(seconds * 1000)));
@@ -99,6 +100,7 @@ export async function wait(seconds) {
 ///   How long to wait between characters, in seconds. Spaces don't
 ///   have delay.
 export async function typewriter(text, delay = 0.05) {
+  main.preflight("typewriter");
   qut.checkString("text", text);
   qut.checkNumber("delay", delay);
   const startCol = qx.col();
@@ -120,6 +122,7 @@ export async function typewriter(text, delay = 0.05) {
 /// return:
 ///   An Image object that you can use with qx.drawImage().
 export async function loadImage(url) {
+  main.preflight("loadImage");
   return new Promise(resolver => {
     const img = new Image();
     img.onload = () => resolver(img);
@@ -134,6 +137,7 @@ export async function loadImage(url) {
 /// return:
 ///   A Sound object that you can use with qx.playSound().
 export async function loadSound(url) {
+  main.preflight("loadSound");
   return new Promise(resolver => {
     const audio = new Audio();
     audio.oncanplaythrough = () => resolver(audio);
@@ -142,3 +146,19 @@ export async function loadSound(url) {
   });
 }
 
+/// Loads a font for later use in drawing text.
+/// fontImageFile: string
+///   The URL to an image file containing the font. This image file should be
+///   a grid of the font's character laid out in a 16x16 grid. The character width
+///   and height will be deduced from the image size by dividing the width and height
+///   by 16, respectively. Therefore, the image's dimensions must both be a multiple of 16.
+/// return:
+///   A font ID that you can later use in functions that take a font like
+///   qx.setFont() and qx.drawText().
+export async function loadFont(fontImageFile) {
+  main.preflight("loadFont");
+  qut.checkString("fontImageFile", fontImageFile);
+  const fontName = "FONT@" + fontImageFile;
+  await main.textRenderer.loadFontAsync(fontName, fontImageFile);
+  return fontName;
+}

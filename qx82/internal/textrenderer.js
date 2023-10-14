@@ -2,19 +2,42 @@ import {CONFIG} from "../config.js";
 import * as qut from "../qut.js";
 import * as main from "./main.js";
 
-export class TextRenderer {
-  constructor() {
+// Represents an individual font that can be used with TextRenderer.
+export class TextRendererFont {
+  // Constructs a font. NOTE: after construction, you must call await initAsync() to
+  // initialize the font.
+  constructor(fontName, fontImageFile) {
+    qut.checkString("fontName", fontName);
+    qut.checkString("fontImageFile", fontImageFile);
+    // Name of the font.
+    this.fontName_ = fontName;
+    // URL of the image file for the font.
+    this.fontImageFile_ = fontImageFile;
     // Original text image, in case we need to regenerate the color images.
     this.origImg_ = null;
-
     // One image for each color.
     this.chrImages_ = [];
+    // Width and height of each character, in pixels.
+    this.charWidth_ = 0;
+    this.charHeight_ = 0;
   }
 
+  getCharWidth() { return this.charWidth_ }
+  getCharHeight() { return this.charHeight_ }
+  getImageForColor(colorNumber) { return this.chrImages_[colorNumber]; }
+
+  // Sets up this font from the given character image file. It's assumed to contain the
+  // glyps arranged in a 16x16 grid, so we will deduce the character size by dividing the
+  // width and height by 16.
   async initAsync() {
-    qut.log("TextRenderer init.");
-    // Load the base image. We will then colorize it with each color.
-    this.origImg_ = await qut.loadImageAsync(CONFIG.CHR_FILE);
+    qut.log(`Building font ${this.fontName_} from image ${this.fontImageFile_}`);
+    this.origImg_ = await qut.loadImageAsync(this.fontImageFile_);
+    qut.assert(this.origImg_.width % 16 === 0 && this.origImg_.height % 16 === 0,
+      `Font ${this.fontName_}: image ${this.fontImageFile_} has dimensions ` +
+      `${this.origImg_.width}x${this.origImg_.height}. It must ` +
+      `have dimensions that are multiples of 16 (16x16 grid of characters).`);
+    this.charWidth_ = Math.floor(this.origImg_.width / 16);
+    this.charHeight_ = Math.floor(this.origImg_.height / 16);
     this.regenColors();
   }
 
@@ -26,7 +49,7 @@ export class TextRenderer {
     const ctx = tempCanvas.getContext('2d');
     this.chrImages_ = [];
     for (let c = 0; c < CONFIG.COLORS.length; c++) {
-      qut.log(`Initializing text color ${c}...`);
+      qut.log(`Initializing font ${this.fontName_}, color ${c}...`);
 
       // Draw the font image to the temp canvas (white over transparent background).
       ctx.clearRect(0, 0, this.origImg_.width, this.origImg_.height);
@@ -45,6 +68,67 @@ export class TextRenderer {
       this.chrImages_.push(thisImg);
     }
   }
+}
+
+export class TextRenderer {
+  constructor() {
+    // TextRendererFont for each font, keyed by font name. The default font is called "default".
+    this.fonts_ = {};
+
+    // Current font. This is never null after initialization. This is a reference
+    // to a TextRendererFont object. For a font to be set as current, it must have a
+    // character width and height that are INTEGER MULTIPLES of CONFIG.CHR_WIDTH and
+    // CONFIG.CHR_HEIGHT, respectively, to ensure the row/column system continues to work.
+    this.curFont_ = null;
+  }
+
+  async initAsync() {
+    qut.log("TextRenderer init.");
+
+    const defaultFont = new TextRendererFont("default", CONFIG.CHR_FILE);
+    await defaultFont.initAsync();
+
+    const actualCharWidth = defaultFont.getCharWidth();
+    const actualCharHeight = defaultFont.getCharHeight();
+
+    qut.assert(
+      actualCharWidth === defaultFont.getCharWidth() &&
+      actualCharHeight === defaultFont.getCharHeight(),
+      `The character image ${CONFIG.CHR_FILE} should be a 16x16 grid of characters with ` +
+      `dimensions 16 * CONFIG.CHR_WIDTH, 16 * CONFIG.CHR_HEIGHT = ` +
+      `${16 * CONFIG.CHR_WIDTH} x ${16 * CONFIG.CHR_HEIGHT}`);
+    
+    this.fonts_["default"] = defaultFont;
+    this.curFont_ = defaultFont;
+  }
+
+  async loadFontAsync(fontName, fontImageFile) {
+    qut.checkString("fontName", fontName);
+    qut.checkString("fontImageFile", fontImageFile);
+    const font = new TextRendererFont(fontName, fontImageFile);
+    await font.initAsync();
+    this.fonts_[fontName] = font;
+  }
+
+  setFont(fontName) {
+    qut.checkString("fontName", fontName);
+    const font = this.fonts_[fontName];
+    if (!font) {
+      qut.fatal(`setFont(): font not found: ${fontName}`);
+      return;
+    }
+    const cw = font.getCharWidth();
+    const ch = font.getCharHeight();
+    if (cw % CONFIG.CHR_WIDTH !== 0 || ch % CONFIG.CHR_HEIGHT !== 0) {
+      qut.fatal(`setFont(): font ${fontName} has character size ${cw}x${ch}, ` +
+        `which is not an integer multiple of CONFIG.CHR_WIDTH x CONFIG.CHR_HEIGHT = ` + 
+        `${CONFIG.CHR_WIDTH}x${CONFIG.CHR_HEIGHT}, so it can't be set as the ` +
+        `current font due to the row,column system. However, you can still use it ` +
+        `directly with drawText() by passing it as a parameter to that function.`);
+      return;
+    }
+    this.curFont_ = font;
+  }
 
   print(text) {
     qut.checkString("text", text);
@@ -52,16 +136,21 @@ export class TextRenderer {
     let col = main.drawState.cursorCol;
     let row = main.drawState.cursorRow;
 
+    // Note: We know (because this is enforced in setFont) that the current font's character size
+    // is a multiple of CONFIG.CHR_WIDTH x CONFIG.CHR_HEIGHT.
+    const colInc = Math.floor(this.curFont_.getCharWidth() / CONFIG.CHR_WIDTH);
+    const rowInc = Math.floor(this.curFont_.getCharHeight() / CONFIG.CHR_HEIGHT);
+
     const initialCol = col;
 
     for (let i = 0; i < text.length; i++) {
       const ch = text.charCodeAt(i);
       if (ch === 10) {
         col = initialCol;
-        row++;
+        row += rowInc;
       } else {
         this.put_(ch, col, row, main.drawState.fgColor, main.drawState.bgColor);
-        col++;
+        col += colInc;
       }
     }
 
@@ -88,6 +177,29 @@ export class TextRenderer {
     qut.checkNumber("x", x);
     qut.checkNumber("y", y);
     this.putxy_(ch, x, y, main.drawState.fgColor, main.drawState.bgColor);
+  }
+
+  // Draws text at the given pixel coordinates, with no cursor movement.
+  drawText(x, y, text, fontName) {
+    qut.checkNumber("x", x);
+    qut.checkNumber("y", y);
+    qut.checkString("text", text);
+    if (fontName) qut.checkString("fontName", fontName);
+
+    const x0 = x;
+    const font = fontName ? (this.fonts_[fontName] || this.curFont_) : this.curFont_;
+    if (!font) {
+      qut.warn(`Requested font '${fontName}' not found: not drawing text.`);
+      return;
+    }
+    for (let i = 0; i < text.length; i++) {
+      const ch = text.charCodeAt(i);
+      if (ch === 10) { x = x0; y += font.getCharHeight(); }
+      else {
+        this.putxy_(ch, x, y, main.drawState.fgColor, main.drawState.bgColor, font);
+        x += font.getCharWidth();
+      }
+    }
   }
 
   // Returns {cols, rows}.
@@ -176,9 +288,10 @@ export class TextRenderer {
     this.putxy_(ch, x, y, fgColor, bgColor);
   }
 
-  putxy_(ch, x, y, fgColor, bgColor) {
-    const chrW = CONFIG.CHR_WIDTH;
-    const chrH = CONFIG.CHR_HEIGHT;
+  putxy_(ch, x, y, fgColor, bgColor, font = null) {
+    font = font || this.curFont_;
+    const chrW = font.getCharWidth();
+    const chrH = font.getCharHeight();
     const fontRow = Math.floor(ch / 16);
     const fontCol = ch % 16;
 
@@ -190,9 +303,16 @@ export class TextRenderer {
       main.ctx.fillRect(x, y, chrW, chrH);
     }
 
-    main.ctx.drawImage(
-      this.chrImages_[qut.clamp(fgColor, 0, this.chrImages_.length - 1)],
+    const color = qut.clamp(fgColor, 0, CONFIG.COLORS.length - 1);
+    const img = font.getImageForColor(color);
+
+    main.ctx.drawImage(img, 
       fontCol * chrW, fontRow * chrH, chrW, chrH, x, y, chrW, chrH);
     main.markDirty();
+  }
+
+  regenColors() {
+    // Tell all the fonts to regenerate their glyph images.
+    Object.values(this.fonts_).forEach(f => f.regenColors());
   }
 }

@@ -89,6 +89,29 @@ export function print(text) {
   main.textRenderer.print(text);
 }
 
+/// Draws text at an arbitrary pixel position on the screen, not following
+/// the "row and column" system. This won't affect cursor position.
+/// x: integer
+///   The X coordinate of the top-left of the text.
+/// y: integer
+///   The Y coordinate of the top-left of the text.
+/// text: string
+///   The text to print. This can contain embedded newlines and they will
+///   behave as you expect: printing will continue at the next line.
+/// fontId: string
+///   (optional) If specified, this is a font ID previously obtained with
+///   qxa.loadFont(), indicating the custom font to use to print the text.
+///   If not specified, then we will use the current font as set with
+///   qx.setFont(), or the default font if that was never set.
+export function drawText(x, y, text, fontId = null) {
+  main.preflight("qx.drawText");
+  qut.checkNumber("x", x);
+  qut.checkNumber("y", y);
+  qut.checkString("text", text);
+  if (fontId) qut.checkString("fontId", fontId);
+  main.textRenderer.drawText(x, y, text, fontId);
+}
+
 /// Measures the size of the given text without printing it.
 /// text: string
 ///   The text to measure.
@@ -307,6 +330,8 @@ export function keyp(keyName) {
 /// of the integer colors. This won't change the image on the screen,
 /// it only applies to newly drawn elements, so this can't be used for
 /// palette animation of something that was already drawn.
+/// WARNING: This is reasonably expensive, as all cached glyph images
+/// must be regenerated. Don't call this often.
 /// colors: array
 ///   An array of RGB values with the new color definitions, in the
 ///   same format as in the CONFIG object.
@@ -314,6 +339,23 @@ export function redefineColors(colors) {
   main.preflight("qx.redefineColors");
   qut.checkArray("colors", colors);
   main.defineColors(colors);
+}
+
+/// Sets the current font for text-based operations like qx.print().
+/// Note that the font passed must have been previously loaded with
+/// qxa.loadFont(). For use as a text font, the font's character dimensions
+/// must be a multiple of CONFIG.CHR_WIDTH and CONFIG.CHR_HEIGHT, so for
+/// example if you specified that your default character size is 8x8, then
+/// fonts can be 8x8, 16x8, 16x16, 32x32, etc. But not 9x7 for example.
+///
+/// fontId (string)
+///   (optional) The font to set. To reset to the default font, pass null,
+///   or omit the parameter.
+export function setFont(fontId) {
+  main.preflight("qx.setFont");
+  fontId = fontId || "default"
+  qut.checkString("fontId", fontId);
+  main.textRenderer.setFont(fontId);
 }
 
 function convChar(charCode) {

@@ -208,6 +208,7 @@ export function markDirty() {
 export function cls() {
   ctx.fillStyle = getColorHex(drawState.bgColor);
   ctx.fillRect(0, 0, canvas.width, canvas.height);
+  this.setCursorLocation(0, 0);
   markDirty();
 }
 
