@@ -278,7 +278,7 @@ export function fillRect(x, y, width, height) {
 ///   The sound to play.
 /// volume: number (default = 1)
 ///   The volume to play the sound at.
-/// Loop: boolean
+/// loop: boolean (default = false)
 ///   Plays the sound in a loop (returns to the start after finishing)
 export function playSound(sfx, volume = 1, loop = false) {
   qut.checkInstanceOf("sfx", sfx, HTMLAudioElement);
