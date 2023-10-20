@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Example - Hello</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+  <!-- Replace with a separate style.css file if you want -->
+  <style type="text/css">
+  body {
+    background: black;
+    color: white;
+  }
+  </style>
+
+  <!-- These 2 script tags are required for the 3D effect.
+       You can remove these if you disabled THREE_SETTINGS. -->
+  <script async src="https://unpkg.com/es-module-shims@1.8.0/dist/es-module-shims.js"></script>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.156.1/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.156.1/examples/jsm/"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import * as qx from "./qx82/qx.js";
+    import * as qxa from "./qx82/qxa.js";
+
+    let selFg = 7;
+    let selBg = 1;
+
+    async function main() {
+      const loopSound = await qxa.loadSound('./assets/loop.ogg');
+
+      while (true) {
+        const k = await qxa.key();
+
+        qx.color(7, 0);
+        qx.cls();
+        qx.locate(7, 1);
+        qx.color(14);
+        qx.print(`Test sound methods\n`);
+        qx.color(1, 7);
+        qx.locate(7, 3);
+        const choice = await qxa.menu(["Play on loop", "Play only once", "Stop playing"]);
+
+        switch (choice) {
+          case 0: qx.playSound(loopSound, 0.8, true); break;
+          case 1:
+            qx.stopSound(loopSound)
+            qx.playSound(loopSound, 0.8);
+            break;
+          case 2: qx.stopSound(loopSound); break;
+        }
+      }
+    }
+
+    window.addEventListener("load", () => qx.init(main));
+  </script>
+</head>
+<body>
+</body>
+</html>

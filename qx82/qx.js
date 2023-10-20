@@ -278,10 +278,13 @@ export function fillRect(x, y, width, height) {
 ///   The sound to play.
 /// volume: number (default = 1)
 ///   The volume to play the sound at.
-export function playSound(sfx, volume = 1) {
+/// Loop: boolean
+///   Plays the sound in a loop (returns to the start after finishing)
+export function playSound(sfx, volume = 1, loop = false) {
   qut.checkInstanceOf("sfx", sfx, HTMLAudioElement);
   sfx.currentTime = 0;
   sfx.volume = volume;
+  sfx.loop = loop;
   sfx.play();
 }
 
@@ -363,5 +366,14 @@ function convChar(charCode) {
     return charCode.charCodeAt(0);
   }
   return charCode;
+}
+
+/// Stop a sound (previously loaded with qxa.playSound).
+/// sfx: Sound
+///   The sound to stop playing.
+export function stopSound(sfx) {
+  qut.checkInstanceOf("sfx", sfx, HTMLAudioElement);
+  sfx.currentTime = 0;
+  sfx.pause();
 }
 
