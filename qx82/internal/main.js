@@ -114,6 +114,11 @@ async function asyncInit(callback) {
 
   initDone = true;
 
+  // Work around an init bug where text would initially not render
+  // on Firefox. I'm not entirely sure I understand why, but this seems
+  // to fix it (perhaps waiting 1 frame gives the canvas time to initialize).
+  await new Promise(resolve => setTimeout(resolve, 1));
+
   await callback();
   render();
 }
