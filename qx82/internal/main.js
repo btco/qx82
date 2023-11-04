@@ -123,6 +123,10 @@ async function asyncInit(callback) {
   render();
 }
 
+export function getContext() {
+  return ctx;
+}
+
 export function preflight(apiMethod) {
   if (crashed) {
     throw new Error(`Can't call API method ${apiMethod}() because the engine has crashed.`);

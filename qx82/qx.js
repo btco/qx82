@@ -351,7 +351,7 @@ export function redefineColors(colors) {
 /// example if you specified that your default character size is 8x8, then
 /// fonts can be 8x8, 16x8, 16x16, 32x32, etc. But not 9x7 for example.
 ///
-/// fontId (string)
+/// fontId: string
 ///   (optional) The font to set. To reset to the default font, pass null,
 ///   or omit the parameter.
 export function setFont(fontId) {
@@ -375,5 +375,19 @@ export function stopSound(sfx) {
   qut.checkInstanceOf("sfx", sfx, HTMLAudioElement);
   sfx.currentTime = 0;
   sfx.pause();
+}
+
+/// Returns the raw canvas 2D context so you can draw anything you want
+/// to it. Note that this is the off-screen 2D context, so you are drawing
+/// to a hidden surface and your beautiful artwork will only be visible
+/// once the screen renders (either by calling qx.render() explicitly,
+/// or by calling a blocking function that causes an implicit render).
+///
+/// return:
+///   The raw HTML 2D canvas context for your enjoyment. If you put the
+///   context into an unusual state, please revert that state after you're
+///   done, otherwise QX82 might get confused.
+export function getContext() {
+  return main.getContext();
 }
 
