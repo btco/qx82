@@ -61,6 +61,12 @@ export const CONFIG = {
     // you want to adjust the positioning of the cursor.
     OFFSET_V: 0.1,
     OFFSET_H: 0,
-  }
+  },
+  // If set, then special escape sequences can be used when printing (to set colors, etc).
+  // These are the sequences that starts and end an escape sequence. See the documentation for
+  // qx.print() for more info on escape sequences.
+  // If you don't want this, comment out these line, or set them to null.
+  PRINT_ESCAPE_START: "{{",
+  PRINT_ESCAPE_END: "}}",
 };
 

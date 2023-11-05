@@ -20,6 +20,12 @@ export class TextRendererFont {
     // Width and height of each character, in pixels.
     this.charWidth_ = 0;
     this.charHeight_ = 0;
+
+    // When we are printing something, we store a backup of the drawing context's
+    // original foreground and background colors, in case we change it during printing
+    // as a result of escape sequences.
+    this.origFgColor_ = 0;
+    this.origBgColor_ = 0;
   }
 
   getCharWidth() { return this.charWidth_ }
@@ -136,6 +142,11 @@ export class TextRenderer {
     let col = main.drawState.cursorCol;
     let row = main.drawState.cursorRow;
 
+    // Store a backup of foreground/background colors, in case we change them during
+    // the print operation as a result of escape sequences.
+    this.origFgColor_ = main.drawState.fgColor;
+    this.origBgColor_ = main.drawState.bgColor;
+
     // Note: We know (because this is enforced in setFont) that the current font's character size
     // is a multiple of CONFIG.CHR_WIDTH x CONFIG.CHR_HEIGHT.
     const colInc = Math.floor(this.curFont_.getCharWidth() / CONFIG.CHR_WIDTH);
@@ -144,6 +155,7 @@ export class TextRenderer {
     const initialCol = col;
 
     for (let i = 0; i < text.length; i++) {
+      i = this.processEscapeSeq_(text, i);
       const ch = text.charCodeAt(i);
       if (ch === 10) {
         col = initialCol;
@@ -156,6 +168,8 @@ export class TextRenderer {
 
     main.drawState.cursorCol = col;
     main.drawState.cursorRow = row;
+    main.drawState.fgColor = this.origFgColor_;
+    main.drawState.bgColor = this.origBgColor_;
     main.markDirty();
   }
 
@@ -210,6 +224,7 @@ export class TextRenderer {
     let thisLineWidth = 0;
     let cols = 0;
     for (let i = 0; i < text.length; i++) {
+      i = this.processEscapeSeq_(text, i, true);
       const ch = text.charCodeAt(i);
       if (ch === 10) {
         rows++;
@@ -309,6 +324,58 @@ export class TextRenderer {
     main.ctx.drawImage(img, 
       fontCol * chrW, fontRow * chrH, chrW, chrH, x, y, chrW, chrH);
     main.markDirty();
+  }
+
+  // Tries to run an escape sequence that starts at text[pos].
+  // Returns the position after the escape sequence ends.
+  // If pretend is true, then this will only parse but not run it.
+  processEscapeSeq_(text, startPos, pretend = false) {
+    // Shorthand.
+    const startSeq = CONFIG.PRINT_ESCAPE_START;
+    const endSeq = CONFIG.PRINT_ESCAPE_END;
+    // If no escape sequences are configured in CONFIG, stop.
+    if (!startSeq || !endSeq) return startPos;
+    // Check that the start sequence is there.
+    if (text.substring(startPos, startPos + startSeq.length) != startSeq) {
+      return startPos;
+    }
+    // Where does it end?
+    const endPos = text.indexOf(endSeq, startPos + startSeq.length);
+    if (!pretend) {
+      // Get the contents of the sequence.
+      const command = text.substring(startPos + startSeq.length, endPos);
+      this.runEscapeCommand_(command);
+    }
+    return endPos + endSeq.length;
+  }
+
+  runEscapeCommand_(command) {
+    // If it contains colons, it's a compound command.
+    if (command.indexOf(',') > 0) {
+      const parts = command.split(',');
+      for (const part of parts) this.runEscapeCommand_(part);
+      return;
+    }
+    command = command.trim();
+    if (command === "") return;
+    // The first character is the command's verb. The rest is the argument.
+    const verb = command[0].toLowerCase();
+    const arg = command.substring(1);
+    const argNum = 1 * arg;
+    switch (verb) {
+      case "f": case "c": // Set foreground color.
+        main.drawState.fgColor = arg !== "" ? argNum : this.origFgColor_;
+        break;
+      case "b": // Set background color.
+        main.drawState.bgColor = arg !== "" ? argNum : this.origBgColor_;
+        break;
+      case "z": // Reset state.
+        main.drawState.fgColor = this.origFgColor_;
+        main.drawState.bgColor = this.origBgColor_;
+        break;
+      default:
+        console.warn("Unknown QX82 print escape command: " + command);
+    }
   }
 
   regenColors() {

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Example - Hello</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+  <!-- Replace with a separate style.css file if you want -->
+  <style type="text/css">
+  body {
+    background: black;
+    color: white;
+  }
+  </style>
+
+  <!-- These 2 script tags are required for the 3D effect.
+       You can remove these if you disabled THREE_SETTINGS. -->
+  <script async src="https://unpkg.com/es-module-shims@1.8.0/dist/es-module-shims.js"></script>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.156.1/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.156.1/examples/jsm/"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import * as qx from "./qx82/qx.js";
+    import * as qxa from "./qx82/qxa.js";
+
+    async function main() {
+      // Load the custom fonts.
+      qx.cls();
+      qx.print("Loading fonts...");
+      const boldFont = await qxa.loadFont("assets/bold-font.png");
+      const bigFont = await qxa.loadFont("assets/big-font2.png");
+      const fantasyFont = await qxa.loadFont("assets/fantasy-font.png");
+      const image = await qxa.loadImage("assets/writer.png");
+      qx.color(7, 0);
+      qx.cls();
+      qx.printBox(32, 24);
+      qx.locate(1, 1);
+      qx.color(0, 7);
+      qx.print("PRINTING/FONTS DEMO\n\n");
+      qx.color(7, 0);
+      qx.print("This is the normal font.\n");
+      qx.setFont(boldFont);
+      qx.print("This is the bold font.\n");
+      qx.setFont(bigFont);
+      qx.print("Big font.\n");
+
+      qx.setFont(null);  // Return to default font.
+      qx.print("\nEscape sequences can be used:\n");
+      // {{c12}} sets the foreground color to 12 (green).
+      // {{z}} resets the color.
+      qx.print("You can have a {{c12}}green{{z}} word.\n");
+      // {{c0}} sets the color to 0 (black) and {{b3}} sets the background to 3 (magenta).
+      // You can combine them in the same sequence: {{c0,b3}}.
+      qx.print("Or say an {{c0,b3}}important{{z}} thing.\n");
+
+      qx.setFont(fantasyFont);
+      qx.print("\nHere's a fantasy font.\n" +
+        "The quick brown fox\n" +
+        "jumps over the lazy dog.");
+
+      qx.drawImage(180, 130, image);
+      qx.locate(2, 16);
+      qx.color(15, 2);
+      qx.printBox(20, 7);
+      qx.locate(3, 17);
+      await qxa.typewriter(
+        "What sayest thou?\n" +
+        "Why doth the swift\n" +
+        "auburn fox leap\n" +
+        "o'er the slothful\n" +
+        "dog?");
+    }
+
+    window.addEventListener("load", () => qx.init(main));
+  </script>
+</head>
+<body>
+</body>
+</html>

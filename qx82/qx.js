@@ -83,6 +83,11 @@ export function cursor(visible) {
 /// text: string
 ///   The text to print. This can contain embedded newlines and they will
 ///   behave as you expect: printing will continue at the next line.
+///   If PRINT_ESCAPE_START and PRINT_ESCAPE_END are defined in CONFIG, then
+///   you can also use escape sequences. For example {{c1}} sets the color to 1,
+///   so your string can be "I like the color {{c1}}blue" and the word 'blue' would
+///   be in blue. The sequence {{b2}} sets the background to 2 (red). The sequence
+///   {{z}} resets the color to the default. See example-printing.html for an example.
 export function print(text) {
   main.preflight("qx.text");
   qut.checkString("text", text);
