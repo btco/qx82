@@ -202,7 +202,7 @@ export function render() {
   realCtx.drawImage(canvas,
     0, 0, realCanvas.width, realCanvas.height)
   dirty = false;
-  cursorRenderer.drawCursor();
+  cursorRenderer.drawCursor(realCtx, realCanvas.width, realCanvas.height);
 }
 
 // Marks the screen as dirty and renders it at the next available opportunity.

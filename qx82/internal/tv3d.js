@@ -5,6 +5,7 @@ import {OutputPass} from "three/addons/postprocessing/OutputPass.js";
 import {EffectComposer} from "three/addons/postprocessing/EffectComposer.js";
 
 import * as qut from "../qut.js";
+import * as main from "./main.js";
 import {CONFIG} from "../config.js";
 
 const CAMERA_FOV = 75;
@@ -118,7 +119,8 @@ export function updateScreen() {
   // Copy screen canvas contents to the texture canvas.
   texCtx.imageSmoothingEnabled = false;
   texCtx.clearRect(0, 0, texCanvas.width, texCanvas.height);
-  texCtx.drawImage(screenCanvas, 0, 0, texCanvas.width, texCanvas.height)
+  texCtx.drawImage(screenCanvas, 0, 0, texCanvas.width, texCanvas.height);
+  main.cursorRenderer.drawCursor(texCtx, texCanvas.width, texCanvas.height);
   // Mark canvasTexture as needing an update since the underlying canvas was updated.
   canvasTexture.needsUpdate = true;
 }

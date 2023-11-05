@@ -48,6 +48,19 @@ export const CONFIG = {
   ],
   // If this is not null, then we will display a virtual joystick if the user
   // is on a mobile device.
-  TOUCH_VJOY: true
+  TOUCH_VJOY: true,
+  // Cursor config:
+  CURSOR: {
+    // Cursor width, as a fraction of the character width (0 to 1)
+    WIDTH_F: 0.8,
+    // Cursor height, as a fraction of the character height (0 to 1)
+    HEIGHT_F: 0.8,
+    // Blink interval in millis.
+    BLINK_INTERVAL: 400,
+    // Cursor offset (as fraction of, respectively, char width and height). Tweak these if
+    // you want to adjust the positioning of the cursor.
+    OFFSET_V: 0.1,
+    OFFSET_H: 0,
+  }
 };
 
