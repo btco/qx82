@@ -12,6 +12,7 @@ import * as menuMod from "./internal/menu.js";
 
 import * as qut from "./qut.js";
 import * as qx from "./qx.js";
+import { CONFIG } from "./config.js";
 
 /// Waits until the user presses a key and returns it.
 /// return:
@@ -104,13 +105,20 @@ export async function typewriter(text, delay = 0.05) {
   qut.checkString("text", text);
   qut.checkNumber("delay", delay);
   const startCol = qx.col();
-  for (let i = 0; i < text.length; i++) {
-    const c = text.charCodeAt(i);
-    if (c == 10) {
-      qx.locate(startCol, qx.row() + 1);
-      continue;
+  const startRow = qx.row();
+  for (let i = 0; i <= text.length; i++) {
+    // If this is the start of an escape sequence, skip to the end of it.
+    if (CONFIG.PRINT_ESCAPE_START &&
+        text.substring(i, i + CONFIG.PRINT_ESCAPE_START.length) === CONFIG.PRINT_ESCAPE_START) {
+      const endPos = text.indexOf(CONFIG.PRINT_ESCAPE_END, i + CONFIG.PRINT_ESCAPE_START.length);
+      if (endPos >= 0) i = endPos + CONFIG.PRINT_ESCAPE_END.length;
     }
-    qx.printChar(c);
+
+    const c = text.charCodeAt(i);
+    qx.locate(startCol, startRow);
+
+    qx.print(text.substring(0, i));
+
     if (c !== 32) await wait(delay);
   }
 }
