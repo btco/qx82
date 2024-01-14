@@ -94,6 +94,19 @@ export function print(text) {
   main.textRenderer.print(text);
 }
 
+/// Prints text centered horizontally in a field of the given width. If the text is
+/// bigger than the width, it will overflow it.
+/// text: string
+///   The text to print.
+/// width: number
+///   The width of the field, in characters.
+export function printCentered(text, width) {
+  main.preflight("qx.printCentered");
+  qut.checkString("text", text);
+  qut.checkNumber("width", width);
+  main.textRenderer.printCentered(text, width);
+}
+
 /// Draws text at an arbitrary pixel position on the screen, not following
 /// the "row and column" system. This won't affect cursor position.
 /// x: integer

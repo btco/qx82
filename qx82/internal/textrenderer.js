@@ -172,6 +172,17 @@ export class TextRenderer {
     main.drawState.bgColor = this.origBgColor_;
     main.markDirty();
   }
+  
+  printCentered(text, width) {
+    qut.checkString("text", text);
+    qut.checkNumber("width", width);
+    text = text.split("\n")[0];
+    if (!text) return;
+    const textWidth = this.measure(text).cols;
+    const col = Math.floor(main.drawState.cursorCol + (width - textWidth) / 2);
+    main.drawState.cursorCol = col;
+    this.print(text);
+  }
 
   printChar(ch, n) {
     if (n === undefined || isNaN(n)) n = 1;
