@@ -79,10 +79,44 @@ async function asyncInit(callback) {
 
   // Set up the real canvas (the one that really exists onscreen).
   realCanvas = document.createElement("canvas");
+  if (CONFIG.CANVAS_SETTINGS && CONFIG.CANVAS_SETTINGS.CANVAS_ID) {
+    realCanvas.setAttribute("id", CONFIG.CANVAS_SETTINGS.CANVAS_ID);
+  }
+  if (CONFIG.CANVAS_SETTINGS && CONFIG.CANVAS_SETTINGS.CANVAS_CLASSES) {
+    for (const className of CONFIG.CANVAS_SETTINGS.CANVAS_CLASSES) {
+      realCanvas.classList.add(className);
+    }
+  }
+  // Prevent default touch behavior on touch devices.
   realCanvas.addEventListener("touchstart", e => e.preventDefault());
-  document.body.appendChild(realCanvas);
 
-  // Set up the virtual canvas (the one we render to).
+  // Figure out where to add the canvas.
+  let container = document.body;
+  if (CONFIG.CANVAS_SETTINGS && CONFIG.CANVAS_SETTINGS.CONTAINER) {
+    // Ok, where do you want your canvas?
+    const containerSpec = CONFIG.CANVAS_SETTINGS.CONTAINER;
+    if (typeof(containerSpec) === "string") {
+      // This is the ID of an HTML element, so go get it.
+      container = document.getElementById(containerSpec);
+      if (!container) {
+        console.error("QX82: Could not find container element with ID: " + containerSpec);
+        container = document.body;
+      }
+    } else if (containerSpec instanceof HTMLElement) {
+      // This is directly an HTMLElement instance, so use that.
+      container = containerSpec;
+    } else {
+      // No idea what this is.
+      console.error("QX82: CONFIG.CANVAS_SETTINGS.CONTAINER must be either an ID of an HTMLElement.");
+      container = document.body;
+    }
+  }
+
+  // Put the canvas in the container.
+  container.appendChild(realCanvas);
+
+  // Set up the virtual canvas (the one we render to). This canvas isn't part of the document
+  // (it's not added to document.body), it only exists off-screen.
   canvas = document.createElement("canvas");
   canvas.width = CONFIG.SCREEN_WIDTH;
   canvas.height = CONFIG.SCREEN_HEIGHT;
@@ -127,6 +161,7 @@ export function getContext() {
   return ctx;
 }
 
+// Checks that the given API method can be called right now.
 export function preflight(apiMethod) {
   if (crashed) {
     throw new Error(`Can't call API method ${apiMethod}() because the engine has crashed.`);
@@ -330,37 +365,52 @@ function updateLayout(renderNow) {
 }
 
 function updateLayout3d() {
-  const size = tv3d.getDesiredCanvasSize();
+  const autoSize = !CONFIG.CANVAS_SETTINGS || CONFIG.CANVAS_SETTINGS.AUTO_SIZE;
+  const autoPos = !CONFIG.CANVAS_SETTINGS || CONFIG.CANVAS_SETTINGS.AUTO_POSITION;
+  // Get the desired canvas size. This already takes into account the auto-size setting.
+  const size = tv3d.getDesiredCanvasSize(realCanvas);
   // Width and height of screen as displayed in HTML.
   CONFIG.SCREEN_EL_WIDTH = size.width;
   CONFIG.SCREEN_EL_HEIGHT = size.height;
   // Real width and height of screen.
   CONFIG.SCREEN_REAL_WIDTH = size.width;
   CONFIG.SCREEN_REAL_HEIGHT = size.height;
-  realCanvas.style.width = size.width + "px";
-  realCanvas.style.height = size.height + "px";
-  realCanvas.style.position = "absolute";
-  realCanvas.style.left = "0px";
-  realCanvas.style.top = "0px";
+  if (autoSize) {
+    realCanvas.style.width = size.width + "px";
+    realCanvas.style.height = size.height + "px";
+  }
+  if (autoPos) {
+    realCanvas.style.position = "absolute";
+    realCanvas.style.left = "0px";
+    realCanvas.style.top = "0px";
+  }
 }
 
 function updateLayout2d() {
-  const frac = CONFIG.MAX_SCREEN_FRACTION || 0.8;
-  const effWidth = Math.round(window.innerWidth * frac);
-  const effHeight = Math.round(window.innerHeight * frac);
+  const autoSize = !CONFIG.CANVAS_SETTINGS || CONFIG.CANVAS_SETTINGS.AUTO_SIZE;
+  const autoPos = !CONFIG.CANVAS_SETTINGS || CONFIG.CANVAS_SETTINGS.AUTO_POSITION;
 
-  // Find the biggest pixel scale we can make fit on the page.
-  let useAutoScale = CONFIG.THREE_SETTINGS || typeof(CONFIG.SCREEN_SCALE) !== 'number';
+  // Does the user want the canvas scale factor to be computed automatically?
+  let useAutoScale = typeof(CONFIG.SCREEN_SCALE) !== 'number';
+  // Computed canvas scale factor.
   let scale;
 
   if (useAutoScale) {
-    // Auto scale.
+    const frac = CONFIG.MAX_SCREEN_FRACTION || 0.8;
+    // Depending on whether or not auto-sizing is on, the available size will be either the
+    // full screen size, or the actual current size.
+    const availableSize = autoSize ?
+        {width: frac * window.innerWidth, height: frac * window.innerHeight } :
+        realCanvas.getBoundingClientRect();
+    // Find the biggest scale factor for which the canvas will still fit on the available size.
     scale = Math.floor(Math.min(
-      effWidth / CONFIG.SCREEN_WIDTH,
-      effHeight / CONFIG.SCREEN_HEIGHT));
+      availableSize.width / CONFIG.SCREEN_WIDTH,
+      availableSize.height / CONFIG.SCREEN_HEIGHT));
+    // That's the scale factor, but clamp it between 1 and 5 for sanity.
     scale = Math.min(Math.max(scale, 1), 5);
-    console.warn(`Window size ${window.innerWidth} x ${window.innerHeight}, scale ${scale}, dpr ${window.devicePixelRatio}`);
+    qut.log(`Auto-scale: available size ${availableSize.width} x ${availableSize.height}, scale ${scale}, dpr ${window.devicePixelRatio}`);
   } else {
+    // Fixed scale.
     scale = CONFIG.SCREEN_SCALE;
   }
 
@@ -371,36 +421,48 @@ function updateLayout2d() {
   CONFIG.SCREEN_REAL_WIDTH = CONFIG.SCREEN_WIDTH * scale;
   CONFIG.SCREEN_REAL_HEIGHT = CONFIG.SCREEN_HEIGHT * scale;
 
-  realCanvas.style.width = CONFIG.SCREEN_EL_WIDTH + "px";
-  realCanvas.style.height = CONFIG.SCREEN_EL_HEIGHT + "px";
-  if (!CONFIG.THREE_SETTINGS) {
+  if (autoSize) {
+    // Set its size based on what we computed above.
+    realCanvas.style.width = CONFIG.SCREEN_EL_WIDTH + "px";
+    realCanvas.style.height = CONFIG.SCREEN_EL_HEIGHT + "px";
     realCanvas.width = CONFIG.SCREEN_REAL_WIDTH;
     realCanvas.height = CONFIG.SCREEN_REAL_HEIGHT;
-    realCtx = realCanvas.getContext("2d");
-    realCtx.imageSmoothingEnabled = false;
+  } else {
+    // Set its resolution to match its actual size.
+    const actualSize = realCanvas.getBoundingClientRect();
+    realCanvas.width = actualSize.width;
+    realCanvas.height = actualSize.height;
+  }
+  realCtx = realCanvas.getContext("2d");
+  realCtx.imageSmoothingEnabled = false;
+
+  if (autoPos) {
+    realCanvas.style.position = "absolute";
+    realCanvas.style.left = Math.round((window.innerWidth - realCanvas.width) / 2) + "px";
+    realCanvas.style.top = Math.round((window.innerHeight - realCanvas.height) / 2) + "px";
   }
 
-  realCanvas.style.position = "absolute";
-  realCanvas.style.left = Math.round((window.innerWidth - CONFIG.SCREEN_EL_WIDTH) / 2) + "px";
-  realCanvas.style.top = Math.round((window.innerHeight - CONFIG.SCREEN_EL_HEIGHT) / 2) + "px";
-
   const scanLinesOp = CONFIG.SCAN_LINES_OPACITY || 0;
-  if (scanLinesOp > 0 && !tv3d) {
-    if (!scanLinesEl) {
-      scanLinesEl = document.createElement("div");
-      document.body.appendChild(scanLinesEl);
+  if (scanLinesOp > 0) {
+    if (autoPos && autoSize) {
+      if (!scanLinesEl) {
+        scanLinesEl = document.createElement("div");
+        document.body.appendChild(scanLinesEl);
+      }
+      scanLinesEl.style.background =
+        "linear-gradient(rgba(0, 0, 0, 0) 50%, rgba(0, 0, 0, 1) 50%), " +
+        "linear-gradient(90deg, rgba(255, 0, 0, .6), rgba(0, 255, 0, .2), rgba(0, 0, 255, .6))";
+      scanLinesEl.style.backgroundSize = `100% 4px, 3px 100%`;
+      scanLinesEl.style.opacity = scanLinesOp;
+      scanLinesEl.style.position = "absolute";
+      scanLinesEl.style.left = realCanvas.style.left;
+      scanLinesEl.style.top = realCanvas.style.top;
+      scanLinesEl.style.width = realCanvas.style.width;
+      scanLinesEl.style.height = realCanvas.style.height;
+      scanLinesEl.style.zIndex = 1;
+    } else {
+      console.error("QX82: 2D scanlines effect only works if CONFIG.CANVAS_SETTINGS.AUTO_POS and AUTO_SIZE are both on.");
     }
-    scanLinesEl.style.background =
-      "linear-gradient(rgba(0, 0, 0, 0) 50%, rgba(0, 0, 0, 1) 50%), " +
-      "linear-gradient(90deg, rgba(255, 0, 0, .6), rgba(0, 255, 0, .2), rgba(0, 0, 255, .6))";
-    scanLinesEl.style.backgroundSize = `100% 4px, 3px 100%`;
-    scanLinesEl.style.opacity = scanLinesOp;
-    scanLinesEl.style.position = "absolute";
-    scanLinesEl.style.left = realCanvas.style.left;
-    scanLinesEl.style.top = realCanvas.style.top;
-    scanLinesEl.style.width = realCanvas.style.width;
-    scanLinesEl.style.height = realCanvas.style.height;
-    scanLinesEl.style.zIndex = 1;
   }
 }
 

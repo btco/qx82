@@ -97,16 +97,29 @@ export function setup(canvasToRenderTo, canvasWithScreenContents) {
   qut.log("TV3D: setup done");
 }
 
-export function getDesiredCanvasSize() {
-  return {
+// NOTE: this can be called before setup(), but in this case the targetCanvas parameter must be
+// non-null.
+export function getDesiredCanvasSize(targetCanvas = null) {
+  targetCanvas = targetCanvas || realCanvas;
+  if (!targetCanvas) {
+    throw new Error("QX82: tv3d.getDesiredCanvasSize() called without a targetCanvas");
+  }
+  const autoSize = !CONFIG.CANVAS_SETTINGS || CONFIG.CANVAS_SETTINGS.AUTO_SIZE;
+  return autoSize ? {
     width: window.innerWidth,
     // Don't let the canvas be taller than it's wide.
     height: Math.min(window.innerHeight, window.innerWidth)
+  } : {
+    // If auto-size is off, the desired canvas size is what the canvas size currently is.
+    width: targetCanvas.getBoundingClientRect().width,
+    height: targetCanvas.getBoundingClientRect().height
   }
 }
 
 function updateRendererSize() {
-  const s = getDesiredCanvasSize();
+  const s = getDesiredCanvasSize(realCanvas);
+  realCanvas.width = s.width;
+  realCanvas.height = s.height;
   renderer.setSize(s.width, s.height);
   renderer.setPixelRatio(window.devicePixelRatio);
 }
@@ -135,6 +148,7 @@ function doFrame() {
 
 function maybeFixRenderSize() {
   const size = getDesiredCanvasSize();
+
   if (size.width === lastCanvasSize.x &&
       size.height === lastCanvasSize.y) return;
   lastCanvasSize.set(size.width, size.height);

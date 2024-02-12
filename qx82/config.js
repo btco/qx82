@@ -2,7 +2,7 @@ export const CONFIG = {
   // Enable debug?
   DEBUG: true,
   // Use 3D effect for the screen?
-  // Set this to null to disable the 3D effect.
+  // Set THREE_SETTINGS to null to disable the 3D effect.
   THREE_SETTINGS: {
     NOISE_SPEED: 4,
     NOISE_INTENSITY: .25,
@@ -17,6 +17,28 @@ export const CONFIG = {
 
     BORDER_THICKNESS: 0.02,
     BORDER_INTENSITY: 0.02,
+  },
+  // Canvas settings
+  CANVAS_SETTINGS: {
+    // The ID to assign to the QX82 canvas.
+    CANVAS_ID: "qx82-canvas",
+    // If set, these CSS classes will be added to the QX82 canvas.
+    // This is an array of strings, each of which is a class name (without the "."),
+    // for example: [ "foo", "bar", "qux" ]
+    CANVAS_CLASSES: [],
+    // If this is true, then we will automatically position the canvas using absolute positioning
+    // to ensure it's centered on the viewport and it's the right size.
+    // If this is false, then you are responsible for positioning the canvas to your liking.
+    AUTO_POSITION: true,
+    // If this is true, we will resize the canvas automatically to match the screen. If false,
+    // you're responsible for sizing the canvas to your liking.
+    // NOTE: If you are using 2D mode (THREE_SETTINGS is null) and have AUTO_SIZE set to false,
+    // you probably want to specify a fixed scale in SCREEN_SCALE rather than "auto", so you
+    // have control over how large the canvas will be.
+    AUTO_SIZE: true,
+    // If this is not null, then this is the element under which to create the rendering canvas.
+    // This can be the ID of an HTML element, or an HTMLElement reference.
+    CONTAINER: null,
   },
   // Background color to fill the space not used by the screen.
   // For best results this should be the same as the page's background.
@@ -33,8 +55,10 @@ export const CONFIG = {
   // Pixel scale (magnification). Can be "auto" or an int >= 1.
   // If this is "auto", we'll automatically compute this to be the maximum possible size
   // for the current screen size.
+  // NOTE: This setting is only used for 2D style (if THREE_SETTINGS is null).
   SCREEN_SCALE: "auto",
   // Maximum fraction of the screen to occupy with the canvas.
+  // NOTE: This setting is only used for 2D style (if THREE_SETTINGS is null).
   MAX_SCREEN_FRACTION: 0.95,
   // If set, this is the opacity of the "scan lines" effect.
   // If 0 or not set, don't show scan lines.
