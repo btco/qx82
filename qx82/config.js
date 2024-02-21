@@ -17,6 +17,10 @@ export const CONFIG = {
 
     BORDER_THICKNESS: 0.02,
     BORDER_INTENSITY: 0.02,
+
+    // If this is uncommented, then this overrides the aspect ratio of the screen.
+    // Useful if you want "non-square" pixels like in some systems.
+    //ASPECT_OVERRIDE: 1.4,
   },
   // Canvas settings
   CANVAS_SETTINGS: {

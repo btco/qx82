@@ -148,7 +148,6 @@ function doFrame() {
 
 function maybeFixRenderSize() {
   const size = getDesiredCanvasSize();
-
   if (size.width === lastCanvasSize.x &&
       size.height === lastCanvasSize.y) return;
   lastCanvasSize.set(size.width, size.height);
@@ -156,7 +155,10 @@ function maybeFixRenderSize() {
   camera.aspect = size.width / size.height;
   camera.updateProjectionMatrix();
 
-  const desiredAspect = CONFIG.SCREEN_COLS / CONFIG.SCREEN_ROWS;
+  let desiredAspect = CONFIG.SCREEN_COLS / CONFIG.SCREEN_ROWS;
+  if (CONFIG.THREE_SETTINGS && CONFIG.THREE_SETTINGS.ASPECT_OVERRIDE) {
+    desiredAspect = CONFIG.THREE_SETTINGS.ASPECT_OVERRIDE;
+  }
 
   if (camera.aspect >= desiredAspect) {
     camera.position.z = CAMERA_Z;
