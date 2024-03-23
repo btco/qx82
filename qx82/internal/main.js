@@ -332,6 +332,15 @@ export function fillRect(x, y, width, height) {
     Math.round(width) - 1, Math.round(height) - 1);
 }
 
+export function saveScreen() {
+  return ctx.getImageData(0, 0, canvas.width, canvas.height);
+}
+
+export function restoreScreen(screenData) {
+  qut.checkInstanceOf("screenData", screenData, ImageData);
+  ctx.putImageData(screenData, 0, 0);
+}
+
 async function doFrame() {
   animFrameRequested = false;
 

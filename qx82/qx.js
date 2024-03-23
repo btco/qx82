@@ -44,6 +44,19 @@ export function color(fg, bg) {
   main.setColor(fg, bg);
 }
 
+/// Returns the current foreground color.
+export function getFgColor() {
+  main.preflight("getFgColor");
+  return main.drawState.fgColor;
+}
+
+/// Returns the current background color.
+/// Note that -1 means transparent.
+export function getBgColor() {
+  main.preflight("getBgColor");
+  return main.drawState.bgColor;
+}
+
 /// Clears the screen using the current background color.
 export function cls() {
   main.preflight("qx.cls");
@@ -409,3 +422,23 @@ export function getContext() {
   return main.getContext();
 }
 
+/// Saves the contents of the screen into an ImageData object and returns it.
+/// You can later restore the screen's contents with qx.restoreScreen.
+/// An ImageData object is somewhat large, as it contains all the pixels on the screen.
+/// This is no longer 1985, so you can keep several of these in memory, but
+/// you shouldn't create them indiscriminately.
+///
+/// return:
+///   An ImageData object with the screen's contents.
+export function saveScreen() {
+  return main.saveScreen();
+}
+
+/// Restores the contents of the screen using an ImageData object obtained from a
+/// previous call to qx.saveScreen().
+///
+/// screenData: ImageData
+///   The ImageData object obtained from a previous call to qx.saveScreen().
+export function restoreScreen(screenData) {
+  return main.restoreScreen(screenData);
+}
