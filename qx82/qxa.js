@@ -31,6 +31,9 @@ export async function key() {
 /// maxLen: integer (default -1)
 ///   The maximum length of the string the user can type.
 ///   If this is -1, this means there is no limit.
+/// maxWidth: integer (default = 28)
+///   The maximum width of the input line, in characters.
+///   If the user types more, the text will wrap to the next line.
 export async function readLine(initString = "", maxLen = -1, maxWidth = 28) {
   main.preflight("readLine");
   qut.checkString("initString", initString);

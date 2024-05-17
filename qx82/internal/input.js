@@ -11,7 +11,7 @@ export class InputSys {
     window.addEventListener("keyup", e => this.onKeyUp(e));
   }
 
-  keyHeld(keyName) { 
+  keyHeld(keyName) {
     return this.keysHeld_.has(keyName.toUpperCase());
   }
   // API function
@@ -72,15 +72,17 @@ export class InputSys {
         // Restore previous cursor state.
         main.cursorRenderer.setCursorVisible(cursorWasVisible);
         return curStrings.join("");
-      } else if (key.length === 1 && curStrings.join("").length < maxLen) {
-        curStrings[curPos] += key;
+      } else if (key.length === 1) {
+        if (curStrings[curPos].length < maxLen || maxLen === -1) {
+          curStrings[curPos] += key;
 
-        if (curStrings[curPos].length >= maxWidth) {
-          main.textRenderer.print(curStrings[curPos].charAt(curStrings[curPos].length-1));
-          curCol = startCol;
-          curPos++;
-          curStrings[curPos] = "";
-          curRow++;
+          if (curStrings[curPos].length >= maxWidth) {
+            main.textRenderer.print(curStrings[curPos].charAt(curStrings[curPos].length-1));
+            curCol = startCol;
+            curPos++;
+            curStrings[curPos] = "";
+            curRow++;
+          }
         }
       }
     }
