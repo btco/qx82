@@ -40,31 +40,48 @@ export class InputSys {
     });
   }
 
-  async readLine(initString, maxLen) {
+  async readLine(initString, maxLen, maxWidth = 28) {
     const startCol = main.drawState.cursorCol;
     const startRow = main.drawState.cursorRow;
-    let curString = initString;
+    let curCol = startCol;
+    let curRow = startRow;
+    let curStrings = [initString];
+    let curPos = 0;
     const cursorWasVisible = main.drawState.cursorVisible;
 
     main.cursorRenderer.setCursorVisible(true);
-
     while (true) {
-      main.setCursorLocation(startCol, startRow);
-      main.textRenderer.print(curString);
+      main.setCursorLocation(curCol, curRow);
+      main.textRenderer.print(curStrings[curPos] || "");
       const key = await this.readKeyAsync();
       if (key === "Backspace") {
-        curString = curString.length > 0 ? curString.substring(0, curString.length - 1) : curString;
+        if (curStrings[curPos].length === 0) {
+          if (curPos === 0) {
+            continue;
+          }
+          curPos--;
+          curRow--;
+        }
+        curStrings[curPos] = curStrings[curPos].length > 0 ? curStrings[curPos].substring(0, curStrings[curPos].length - 1) : curStrings[curPos];
         // Erase the character.
-        main.setCursorLocation(startCol + curString.length, startRow);
+        main.setCursorLocation(curCol + curStrings[curPos].length, curRow);
         main.textRenderer.print(" ");
       } else if (key === "Enter") {
         // Move cursor to start of next line.
-        main.setCursorLocation(1, startRow + 1);
+        main.setCursorLocation(1, curRow + 1);
         // Restore previous cursor state.
         main.cursorRenderer.setCursorVisible(cursorWasVisible);
-        return curString;
-      } else if (key.length === 1) {
-        curString += key;
+        return curStrings.join("");
+      } else if (key.length === 1 && curStrings.join("").length < maxLen) {
+        curStrings[curPos] += key;
+
+        if (curStrings[curPos].length >= maxWidth) {
+          main.textRenderer.print(curStrings[curPos].charAt(curStrings[curPos].length-1));
+          curCol = startCol;
+          curPos++;
+          curStrings[curPos] = "";
+          curRow++;
+        }
       }
     }
   }
