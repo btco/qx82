@@ -40,7 +40,7 @@ export class InputSys {
     });
   }
 
-  async readLine(initString, maxLen, maxWidth = 28) {
+  async readLine(initString, maxLen, maxWidth = -1) {
     const startCol = main.drawState.cursorCol;
     const startRow = main.drawState.cursorRow;
     let curCol = startCol;
@@ -73,10 +73,10 @@ export class InputSys {
         main.cursorRenderer.setCursorVisible(cursorWasVisible);
         return curStrings.join("");
       } else if (key.length === 1) {
-        if (curStrings[curPos].length < maxLen || maxLen === -1) {
+        if (curStrings.join("").length < maxLen || maxLen === -1) {
           curStrings[curPos] += key;
 
-          if (curStrings[curPos].length >= maxWidth) {
+          if (maxWidth !== -1 && curStrings[curPos].length >= maxWidth) {
             main.textRenderer.print(curStrings[curPos].charAt(curStrings[curPos].length-1));
             curCol = startCol;
             curPos++;
