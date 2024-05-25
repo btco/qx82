@@ -14,6 +14,7 @@ the [API reference](https://btco.github.io/qx82/reference.html) in the QX82 webs
 ## Special Thanks
 (In reverse cron order)
 
+* [HoofedEar](https://github.com/HoofedEar) for implementing multiline support in the `readLine` function
 * [Alfonso Saavedra](https://github.com/son-link) for tweaks to the sound effects API and the example-sounds sample.
 * [Lena Trauman](https://mastodon.gamedev.place/@lenatrauman@merveilles.town) for editing colmar.png, reducing dithering and giving it a much cleaner look.
 * [Roberto](https://twitter.com/altavox) for helping debug and fix a canvas scaling issue on some devices.
