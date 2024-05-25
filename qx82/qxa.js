@@ -31,11 +31,15 @@ export async function key() {
 /// maxLen: integer (default -1)
 ///   The maximum length of the string the user can type.
 ///   If this is -1, this means there is no limit.
-export async function readLine(initString = "", maxLen = -1) {
+/// maxWidth: integer (default = -1)
+///   The maximum width of the input line, in characters.
+///   When the user types more, the text will wrap to the next line.
+///   If this is -1, this means it won't wrap at all.
+export async function readLine(initString = "", maxLen = -1, maxWidth = -1) {
   main.preflight("readLine");
   qut.checkString("initString", initString);
   qut.checkNumber("maxLen", maxLen);
-  return await main.inputSys.readLine(initString, maxLen);
+  return await main.inputSys.readLine(initString, maxLen, maxWidth);
 }
 
 /// Shows a menu of choices and waits for the user to pick an option.
