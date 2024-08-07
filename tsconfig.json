@@ -1,0 +1,43 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "module": "ESNext",
+    "lib": [
+      "ES2020",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "jsx": "react-jsx",
+    "skipLibCheck": true,
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    /* Linting */
+    "strict": true,
+    "strictNullChecks": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    // Emit types
+    "declaration": true,
+    "declarationDir": "./qx82",
+    "outDir": "./qx82",
+    "rootDir": "./src",
+    "emitDeclarationOnly": true,
+    "baseUrl": ".",
+    "paths": {
+      "*": [
+        "types/*",
+        "src/*"
+      ]
+    }
+  },
+  "include": [
+    "src",
+    "types/global.d.ts",
+  ]
+}

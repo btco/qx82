@@ -1,0 +1,22 @@
+{
+  "name": "qx82",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "main": "qx82/index.js",
+  "module": "qx82/index.js",
+  "types": "qx82/index.d.ts",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build && tsc && mkdir qx82/types && cp src/types/global.d.ts qx82/types/",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "three": "^0.167.0",
+    "typescript": "5.2.2",
+    "vite": "5.3.4"
+  },
+  "dependencies": {
+    "@types/three": "^0.167.0"
+  }
+}

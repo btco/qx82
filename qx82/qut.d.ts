@@ -1,0 +1,25 @@
+/// <reference types="./types/global.d.ts" />
+export declare function fatal(error: string): void;
+export declare function assert<T>(cond: T, msg: string): Exclude<T, null | undefined>;
+export declare function assertDebug(cond: unknown, msg: string): unknown;
+export declare function assertEquals(expected: unknown, actual: unknown, what: string): unknown;
+export declare function checkType(varName: string, varValue: unknown, varType: string): unknown;
+export declare function checkNumber(varName: string, varValue: number, optMin?: number, optMax?: number): number;
+export declare function checkString(varName: string, varValue: string): unknown;
+export declare function checkBoolean(varName: string, varValue: boolean): unknown;
+export declare function checkFunction(varName: string, varValue: Function): unknown;
+export declare function checkObject(varName: string, varValue: Object): unknown;
+export declare function checkInstanceOf(varName: string, varValue: unknown, expectedClass: unknown): unknown;
+export declare function checkArray(varName: string, varValue: Array<unknown>): unknown[];
+export declare const log: (...data: any[]) => void;
+export declare const warn: (...data: any[]) => void;
+export declare const error: (...data: any[]) => void;
+export declare function loadImageAsync(src: string): Promise<HTMLImageElement>;
+export declare function loadFileAsync(url: string): Promise<unknown>;
+export declare function clamp(x: number, lo: number, hi: number): number;
+export declare function randomInt(lowInclusive: number, highInclusive: number): number;
+export declare function randomPick(array: unknown[]): unknown;
+export declare function shuffleArray(array: unknown[]): unknown[];
+export declare function dist2d(x0: number, y0: number, x1: number, y1: number): number;
+export declare function intersectIntervals(as: number, ae: number, bs: number, be: number, result?: IntersectInterval): boolean;
+export declare function intersectRects(r1: Rectangle, r2: Rectangle, dx1?: number, dy1?: number, dx2?: number, dy2?: number, result?: Rectangle): boolean;
