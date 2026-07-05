@@ -74,6 +74,13 @@ export const CONFIG = {
     "#000", "#00A", "#A00", "#A0A", "#0A0", "#0AA", "#AA0", "#DDD",
     "#666", "#00F", "#F00", "#F0F", "#0F0", "#0FF", "#FF0", "#FFF"
   ],
+  // If you prefer the classic ZX Spectrum look, comment out the COLORS above and
+  // uncomment this palette instead. The first 8 are the "normal" brightness colors
+  // and the last 8 are the "bright" versions, matching the Spectrum's 15-color set.
+  // COLORS: [
+  //   "#000000", "#0000D7", "#D70000", "#D700D7", "#00D700", "#00D7D7", "#D7D700", "#D7D7D7",
+  //   "#000000", "#0000FF", "#FF0000", "#FF00FF", "#00FF00", "#00FFFF", "#FFFF00", "#FFFFFF"
+  // ],
   // If this is not null, then we will display a virtual joystick if the user
   // is on a mobile device.
   TOUCH_VJOY: true,
