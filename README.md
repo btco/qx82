@@ -11,6 +11,16 @@ For more information, check out the
 See the [How-To section](https://btco.github.io/qx82/howto.html) and
 the [API reference](https://btco.github.io/qx82/reference.html) in the QX82 website.
 
+## Why no Typescript? Why no build system?
+
+For this project, I really want to keep things simple - plain Javascript, just edit
+in a text editor and run it on your browser: no compilation, no type safety,
+no frameworks, no unit tests, no overthinking.
+
+If you want to do something more complicated, you're of course welcome to adapt it to your
+build or deployment system in your separate fork of this repo that I'll be happy to link to,
+but please don't send pull requests introducing build systems, Typescript, frameworks, etc, into this repo.
+
 ## Special Thanks
 (In reverse cron order)
 
