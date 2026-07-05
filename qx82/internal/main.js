@@ -228,6 +228,7 @@ export function setFrameHandler(callback, targetFps) {
 
 export function render() {
   if (crashed) return;
+  dirty = false;
   if (tv3d) {
     tv3d.updateScreen();
     return;
@@ -236,7 +237,6 @@ export function render() {
   realCtx.clearRect(0, 0, realCanvas.width, realCanvas.height);
   realCtx.drawImage(canvas,
     0, 0, realCanvas.width, realCanvas.height)
-  dirty = false;
   cursorRenderer.drawCursor(realCtx, realCanvas.width, realCanvas.height);
 }
 
