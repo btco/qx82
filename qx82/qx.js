@@ -163,12 +163,21 @@ export function measure(text) {
 ///   and "A" mean the same thing.
 /// numTimes: integer, optional, default = 1
 ///   How many times to print the character. By default 1.
-export function printChar(charCode, numTimes = 1) {
+/// options: object, optional
+///   If given, an object with any of the following fields:
+///   * flipH: boolean, if true the character is drawn mirrored horizontally.
+///   * flipV: boolean, if true the character is drawn mirrored vertically.
+export function printChar(charCode, numTimes = 1, options = null) {
   main.preflight("qx.printChar");
   charCode = convChar(charCode);
   qut.checkNumber("charCode", charCode);
   qut.checkNumber("numTimes", numTimes);
-  main.textRenderer.printChar(charCode, numTimes);
+  if (options !== null && options !== undefined) {
+    qut.checkObject("options", options);
+    if (options.flipH !== undefined) qut.checkBoolean("options.flipH", options.flipH);
+    if (options.flipV !== undefined) qut.checkBoolean("options.flipV", options.flipV);
+  }
+  main.textRenderer.printChar(charCode, numTimes, options);
 }
 
 /// Prints a rectangle of the given size with the given character,

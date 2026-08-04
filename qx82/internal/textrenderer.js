@@ -184,13 +184,15 @@ export class TextRenderer {
     this.print(text);
   }
 
-  printChar(ch, n) {
+  // Prints a character n times at the cursor position, advancing the cursor.
+  // options (optional) can contain flipH and flipV booleans to mirror the glyph.
+  printChar(ch, n, options = null) {
     if (n === undefined || isNaN(n)) n = 1;
     qut.checkNumber("ch", ch);
     qut.checkNumber("n", n);
     while (n-- > 0) {
       this.put_(ch, main.drawState.cursorCol,
-        main.drawState.cursorRow, main.drawState.fgColor, main.drawState.bgColor);
+        main.drawState.cursorRow, main.drawState.fgColor, main.drawState.bgColor, options);
       main.drawState.cursorCol++;
     }
     main.markDirty();
@@ -306,24 +308,31 @@ export class TextRenderer {
     main.drawState.cursorRow = startRow;
   }
 
-  put_(ch, col, row, fgColor, bgColor) {
+  // Draws a character at the given column and row.
+  // options (optional) can contain flipH and flipV booleans to mirror the glyph.
+  put_(ch, col, row, fgColor, bgColor, options = null) {
     const chrW = CONFIG.CHR_WIDTH;
     const chrH = CONFIG.CHR_HEIGHT;
     const x = Math.round(col * chrW);
     const y = Math.round(row * chrH);
-    this.putxy_(ch, x, y, fgColor, bgColor);
+    this.putxy_(ch, x, y, fgColor, bgColor, null, options);
   }
 
-  putxy_(ch, x, y, fgColor, bgColor, font = null) {
+  // Draws a character at the given pixel position, optionally with a specific font.
+  // options (optional) can contain flipH and flipV booleans to mirror the glyph.
+  putxy_(ch, x, y, fgColor, bgColor, font = null, options = null) {
     font = font || this.curFont_;
     const chrW = font.getCharWidth();
     const chrH = font.getCharHeight();
     const fontRow = Math.floor(ch / 16);
     const fontCol = ch % 16;
+    const flipH = !!(options && options.flipH);
+    const flipV = !!(options && options.flipV);
 
     x = Math.round(x);
     y = Math.round(y);
 
+    // The background fill is not affected by flipping, so do it before any transform.
     if (bgColor >= 0) {
       main.ctx.fillStyle = main.getColorHex(bgColor);
       main.ctx.fillRect(x, y, chrW, chrH);
@@ -332,8 +341,19 @@ export class TextRenderer {
     const color = qut.clamp(fgColor, 0, CONFIG.COLORS.length - 1);
     const img = font.getImageForColor(color);
 
+    // To flip, mirror the canvas about the center of the character's cell, so the
+    // glyph still lands exactly on the same rectangle after being mirrored.
+    if (flipH || flipV) {
+      main.ctx.save();
+      main.ctx.translate(x + chrW / 2, y + chrH / 2);
+      main.ctx.scale(flipH ? -1 : 1, flipV ? -1 : 1);
+      main.ctx.translate(-(x + chrW / 2), -(y + chrH / 2));
+    }
+
     main.ctx.drawImage(img, 
       fontCol * chrW, fontRow * chrH, chrW, chrH, x, y, chrW, chrH);
+
+    if (flipH || flipV) main.ctx.restore();
     main.markDirty();
   }
 
